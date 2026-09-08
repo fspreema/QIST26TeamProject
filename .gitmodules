@@ -1,0 +1,3 @@
+[submodule "external/DiracWMC"]
+	path = external/DiracWMC
+	url = https://github.com/System-Verification-Lab/DiracWMC.git
