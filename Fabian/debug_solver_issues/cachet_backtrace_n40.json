@@ -1,0 +1,11 @@
+{
+  "command": [
+    "./cachet",
+    "/debug/n40.cnf"
+  ],
+  "returncode": 139,
+  "timed_out": false,
+  "elapsed": 1.5521355839999984,
+  "stdout": "cachet version 1.21, December 2005\ncopyright 2005, University of Washington\nincorporating code from zchaff, copyright 2004, Princeton University\nSolving /debug/n40.cnf ......\nNumber of unit clauses\t\t\t0\nAdded conflict clauses: 1000\nAdded conflict clauses: 2000\n",
+  "stderr": "./cachet[0x421938]\n/lib/x86_64-linux-gnu/libc.so.6(+0x3c050)[0x7fffff3e3050]\n./cachet(_ZN7CSolver24set_var_value_current_dlEii+0x1b3)[0x412369]\n./cachet(_ZN7CSolver13set_var_valueEiiii+0x101)[0x412b9b]\n./cachet(_ZN7CSolver6deduceEv+0x74)[0x412c12]\n./cachet(_ZN7CSolver10real_solveEv+0x26)[0x418890]\n./cachet(_ZN7CSolver5solveEv+0x1f8)[0x418b96]\n./cachet(_Z9SAT_SolvePv+0x9)[0x40b6d1]\n./cachet(main+0x725)[0x40a97f]\n/lib/x86_64-linux-gnu/libc.so.6(+0x2724a)[0x7fffff3ce24a]\n/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x85)[0x7fffff3ce305]\n./cachet(_start+0x21)[0x4084f1]\n"
+}

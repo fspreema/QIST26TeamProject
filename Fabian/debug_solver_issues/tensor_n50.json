@@ -1,0 +1,14 @@
+{
+  "command": [
+    "python",
+    "./src/tensororder.py",
+    "--planner=factor-Flow",
+    "--weights=cachet",
+    "--timeout=30"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed": 1.2013443339999412,
+  "stdout": "Total Time: 0.8946375846862793\nCount: 2.870488892009924e-302\n",
+  "stderr": ""
+}

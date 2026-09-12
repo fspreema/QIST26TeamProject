@@ -1,6 +1,7 @@
+from time import perf_counter
+
 import numpy as np
 import wcnf_matrix as wmc
-from time import perf_counter
 
 # Global Variables
 IDX: wmc.Index[float] = wmc.Index(2)
@@ -121,6 +122,31 @@ class IsingParameters:
                 
         return self.h_field, self.j_interactions
 
+    def random_sampling(self, seed: int = 42) -> tuple[np.ndarray, np.ndarray]:
+        """
+        - We set h=0
+        - We sample J from a uniformal distribution
+        - On average each spin has 3 neighbours:
+            -> For every possible pair of spins (i,j), independently create an interaction edge with probability p
+            -> p = 3 / (N - 1) since 3 on average neigbours of N-1 total neigbours
+        """
+        # prob given by
+        p = 3 / (self.length - 1)
+        rng = np.random.default_rng(seed)
+
+        # Init h and J
+        self.h_field = np.zeros(self.length)
+        self.j_interactions = np.zeros((self.length, self.length))
+
+        # # J is sampled uniformly from [-1, 1]
+        # if I, J skip J, I and i = j -> Upper/lower triangle
+        for i in range(self.length):
+            for j in range(self.length):
+                if rng.random() < p and i<j:
+                    self.j_interactions[i, j] = rng.uniform(low=-1.0, high=1.0)
+
+        return self.h_field, self.j_interactions
+
 class IsingModelWMC:
 
     def __init__(self, 
@@ -147,6 +173,8 @@ class IsingModelWMC:
                          B: wmc.WCNFMatrix[float] | None = None, 
                          j: int | None= None) -> wmc.WCNFMatrix[float]:
         """
+        CURRENTLY LEGACY FUCTION!!!
+
         Compute the tensor product of two cases
         a) One Matrix given with position i
             -> Calc I tens I ... tens A ... where A is in the i-th pos
@@ -185,10 +213,13 @@ class IsingModelWMC:
 
         return wmc.WCNFMatrix.identity(IDX, self.num_spins)
 
-    def get_partition_function(self):
+    def build_partition_formula(self):
         """
-        Compute the partition function of the issing model
+        Build the weighted CNF whose model count is the partition function.
         """
+
+        # Initlize Dirac registry
+        spins = [wmc.Reg(IDX) for _ in range(self.num_spins)]
 
         build_start = perf_counter()
         print("  Building WCNF formula...", flush=True)
@@ -196,44 +227,82 @@ class IsingModelWMC:
         # a) First Magnetic Interaction of individual Spins
         exp_magnetic = None
 
-        for i in range(self.num_spins):
+        # If all h = 0 we get the identitiy
+        if np.all(self.h_field == 0):
+            exp_magnetic = self._get_identity_tensor()
 
-            # if h = 0 we get the identitiy
-            if self.h_field[i] == 0:
-                exp_magnetic_i = I
+        # If not actually construct the individual contributions
+        else:
+            for i in range(self.num_spins):
 
-            # Else calculate value of 2-dim matrices
-            else:
-                angle = self.beta * self.h_field[i]
-                exp_magnetic_i = np.exp(angle) * P0 + np.exp(-angle) * P1
+                # if h = 0 we get the identitiy
+                if self.h_field[i] == 0:
+                    exp_magnetic_i = I
 
-            # First tensor factor
-            if exp_magnetic is None:
-                exp_magnetic = exp_magnetic_i
+                # Else calculate value of 2-dim matrices
+                else:
+                    angle = self.beta * self.h_field[i]
+                    exp_magnetic_i = np.exp(angle) * P0 + np.exp(-angle) * P1
 
-            # Append further tensor factors
-            else:
-                exp_magnetic = exp_magnetic ** exp_magnetic_i
+                # First tensor factor
+                if exp_magnetic is None:
+                    exp_magnetic = exp_magnetic_i
+
+                # Append further tensor factors
+                else:
+                    exp_magnetic = exp_magnetic ** exp_magnetic_i
 
         # b) Second Magnetic Interaction of pairs of spins
-        exp_pair_interaction = self._get_identity_tensor()
+        # Full-system identity: its positions correspond to every spin in order.
+        exp_pair_interaction = self._get_identity_tensor() | tuple(spins)
+
+        # Def needed constants
+        q_plus = P0 ** P0 + P1 ** P1
+        q_minus = P0 ** P1 + P1 ** P0
 
         for i in range(self.num_spins):
             for j in range(self.num_spins):
                 
-                # if J = 0 just return I since cosh(0) = 1 and sinh(0) = 0
+                # if J = 0 just continue since exp(0) = I
                 if self.j_interactions[i,j] == 0:
                     continue
                 else:
+                    # Build local interaction
                     angle = self.beta * self.j_interactions[i,j]
-                    q_plus = self._get_tensor_prod(P0,i,P0,j) + self._get_tensor_prod(P1,i,P1,j)
-                    q_minus = self._get_tensor_prod(P0,i,P1,j) + self._get_tensor_prod(P1,i,P0,j)
-                    exp_pair_interaction *= (np.exp(angle) * q_plus + np.exp(-angle) * q_minus)
+                    local_interactions = (np.exp(angle) * q_plus + np.exp(-angle) * q_minus)
+
+                    # Now construct corresponding tensored interactions
+                    # Its first position in tensor prodcut belongs to spin i; its second belongs to spin j.
+                    exp_pair_interaction *= local_interactions | (spins[i], spins[j])
 
         # c) Z = tr(e^(-beta * H)) -> Calcuate by using WMC
-        joint_exp = exp_magnetic * exp_pair_interaction
-        cnf, weight_func = joint_exp.trace_formula()
+        # Since we have registries in joint_exp we first need to call the underlying mtx
+        joint_exp = (exp_magnetic | tuple(spins)) * exp_pair_interaction
+        cnf, weight_func = joint_exp.mat.trace_formula()
 
         print(f"  Formula ready after {perf_counter() - build_start:.2f} s; "
-              "starting model counter...", flush=True)
-        return weight_func(cnf)
+              "ready for model counters", flush=True)
+
+        return cnf, weight_func
+
+    def get_partition_function(self, solver_class, *, formula=None):
+        """
+        Return Z and the solver's own runtime, excluding formula construction.
+        Pass this model's prebuilt formula to reuse it across model counters.
+        """
+
+        cnf, weight_func = (
+            self.build_partition_formula() if formula is None else formula
+        )
+
+        result = solver_class().model_count(cnf, weight_func)
+        if not result.success:
+            raise RuntimeError("Solver failed to execute")
+        if not np.isfinite(result.model_count) or result.model_count <= 0:
+            raise RuntimeError(
+                f"Solver returned an invalid partition function Z={result.model_count}; "
+                "possible numerical overflow or underflow"
+            )
+        if not np.isfinite(result.runtime) or result.runtime < 0:
+            raise RuntimeError("Solver did not report a valid runtime")
+        return result

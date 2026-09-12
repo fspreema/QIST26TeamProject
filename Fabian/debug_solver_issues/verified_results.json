@@ -1,0 +1,20 @@
+{
+  "40": {
+    "TensorOrder_mcc_Z": 7399314796722865.0,
+    "DPMC_printed_Z": 7399310000000000.0,
+    "relative_difference": 6.482658187653342e-07,
+    "tensor_reported_seconds": 0.7493555545806885
+  },
+  "50": {
+    "TensorOrder_mcc_Z": 3.3049312502594515e+19,
+    "DPMC_printed_Z": 3.30493e+19,
+    "relative_difference": 3.783011980646342e-07,
+    "tensor_reported_seconds": 1.142719030380249
+  },
+  "60": {
+    "TensorOrder_mcc_Z": 1.8293505471602083e+24,
+    "DPMC_printed_Z": 1.82935e+24,
+    "relative_difference": 2.9910079794936237e-07,
+    "tensor_reported_seconds": 1.7220714092254639
+  }
+}

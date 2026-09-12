@@ -1,0 +1,11 @@
+{
+  "command": [
+    "./cachet",
+    "/debug/n40.cnf"
+  ],
+  "returncode": -9,
+  "timed_out": true,
+  "elapsed": 45.038941729000015,
+  "stdout": "cachet version 1.21, December 2005\ncopyright 2005, University of Washington\nincorporating code from zchaff, copyright 2004, Princeton University\nSolving /debug/n40.cnf ......\nNumber of unit clauses\t\t\t0\nAdded conflict clauses: 1000\nAdded conflict clauses: 2000\nAdded conflict clauses: 3000\nnumber of cache hit: 100000, pos_hit = 99997, neg_hit = 3\nAdded cache entries: 100000\n",
+  "stderr": ""
+}
