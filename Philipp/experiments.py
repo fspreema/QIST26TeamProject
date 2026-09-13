@@ -4,11 +4,11 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 from IsingModel import LatticeIsing
+from TransIsing import LatticeTransIsing
 
 
-
-
-
+cnf, WeightFunction = LatticeTransIsing(dimensions=2, size=3, weights=0.1, Z_field=0.4, X_field = 0.2).partition_function(1)
+print(WeightFunction(cnf))
 betas = np.linspace(0, 10, 20)
 values = []
 for beta in betas:
@@ -17,7 +17,8 @@ for beta in betas:
             dimensions=2,
             size=2,
             weights=0.1,#This gives lattice on a torus with homogenous weights 0.1
-            dimsubspace=2
+            dimsubspace=2,
+            extfield = 0.4
             ).partition_function(beta)
         )
 
@@ -71,7 +72,7 @@ for (i, j), w in weights.items():
 # Extract edge weights
 edge_weights = [G[u][v]["weight"] for u, v in G.edges()]
 
-# Plot
+# Plot of the Lattice weights 
 plt.figure(figsize=(6, 6))
 
 nx.draw_networkx_nodes(
@@ -94,6 +95,8 @@ plt.axis("equal")
 plt.axis("off")
 plt.title("Weighted square lattice")
 plt.show()
+
+
 for beta in betas:
     cnf, WeightFunction = (
         LatticeIsing(

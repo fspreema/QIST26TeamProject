@@ -4,38 +4,42 @@ from wcnf_matrix import *
 import numpy as np
 from functools import reduce
 from itertools import product
-import networkx as nx
 
-import matplotlib.pyplot as plt
 
 
 class IsingModel:
 
-    def __init__(self,  weights, I , nodes):
+    def __init__(self,  nodes, weights, I = Index(2), extfield = 0):
         """ size:    number of nodes in the graph
             weights: a dictionary (node_1,node_2) -> edge 
-            I:       the Index of the matrix"""
+            I:       the Index of the matrix
+            extfield:Dictionary (node) -> external field or float(if homogenous) """
+        if isinstance(extfield, float):
+            self.extfield = dict({node: extfield for node in nodes})
+        else: 
+            self.extfield = extfield
         self.nodes = nodes
-
-        self.registers = {node: Reg(I) for node in nodes}
+        self.index = I
+        self.registers = {node: Reg(self.index) for node in nodes}
         #Each register corresponds to the sub Hilbert space of one qubit
 
         self.weights = weights
-        self.index = I
+
 
 
     def hamiltonian(self):
+        #Returns the Hamiltonian of the system, takes a long time
         I = self.index
         Z = ket(I[0]) * bra(I[0]) - ket(I[1]) * bra(I[1])
 
+        ListofFactors = [(self.weights[w]*Z|self.registers[w[0]])*(self.weights[w]*Z|self.registers[w[1]]) for w in self.weights] + [(self.extfield[node]*Z) for node in self.extfield] 
+        #This list saves all factors of the Ising model
 
-        ListofFactors = [(self.weights[w]*Z|self.registers[w[0]])*(self.weights[w]*Z|self.registers[w[1]]) for w in self.weights]
-        #This list saves all factors of the Ising model, takes very long
 
         self.matrix = reduce(lambda x, y: x+y , ListofFactors)
         #The outside field is zero
 
-        return(self.matrix)
+        return(self.matrix.mat)
 
     def partition_function(self, beta, concrete = False):
 
@@ -76,7 +80,7 @@ class IsingModel:
         
 
 
-def LatticeIsing(dimensions, size, weights = 1, dimsubspace = 2):
+def LatticeIsing(dimensions, size, weights = 1, dimsubspace = 2, extfield = 0):
     """ dimension: Dimension of the Lattice, 
         size: length of one side of the lattice, 
         weights: The weights accepts dict and int(Standard lattice with homogeneus weights = weights)
@@ -94,7 +98,7 @@ def LatticeIsing(dimensions, size, weights = 1, dimsubspace = 2):
         dicweights = weights
         nodes = range(size**dimensions)
 
-    return IsingModel(nodes = nodes, weights = dicweights, I = I)
+    return IsingModel(nodes = nodes, weights = dicweights, I = I, extfield = extfield)
 
 
 
