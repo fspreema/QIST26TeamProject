@@ -1,9 +1,7 @@
 import argparse
 import csv
 import sys
-import traceback
 from pathlib import Path
-from time import perf_counter
 
 # Make the local DiracWMC checkout available to this test script.
 project_root = Path(__file__).resolve().parents[2]
@@ -12,7 +10,13 @@ sys.path.insert(0, str(project_root / "external" / "DiracWMC" / "wcnf_matrix"))
 import matplotlib.pyplot as plt
 import numpy as np
 import wcnf_matrix as wmc
-from ising_model import IsingModelWMC, IsingParameters
+from ising_model import (
+    IsingModel,
+    TransversalIsingModel,
+    get_lattice_parameters,
+    get_pairs,
+    get_random_graph_parameters,
+)
 from local_solvers import TensorOrderLocal
 
 # Shared solver selection
@@ -25,27 +29,27 @@ available_solvers = {
 # Shared plotting function
 def plot_runtime(lengths, runtime, *, title, xlabel, filename):
     """
-    Save Runtime aagainst lattice size wuth CSV and print Plot as PDF
+    Save solver runtimes as CSV and plot them as PDF.
     """
 
-    # Create csv file with runtime for individual solvers
-    csv_path = Path(__file__).resolve().parent / Path(filename).with_suffix(".csv")
+    output_path = Path(__file__).resolve().parent / "Results" / filename
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    csv_path = output_path.with_suffix(".csv")
+
+    # One row per size, with one runtime column for each solver.
     with csv_path.open("w", newline="") as output:
         writer = csv.writer(output)
         writer.writerow([xlabel, *runtime])
-        print(f"\n{title}: solver runtime summary", flush=True)
-        print(" | ".join([xlabel, *runtime]), flush=True)
         for index, size in enumerate(lengths):
-            values = [times[index] if np.isfinite(times[index]) else "FAILED"
-                      for times in runtime.values()]
-            writer.writerow([size, *values])
-            print(" | ".join([str(size), *[f"{v:.6f}" if isinstance(v, (float, np.floating))
-                                         else str(v) for v in values]]), flush=True)
-    print(f"Results saved to {csv_path}", flush=True)
+            row = [size]
+            for solver_name in runtime:
+                seconds = runtime[solver_name][index]
+                row.append(seconds if np.isfinite(seconds) else "FAILED")
+            writer.writerow(row)
 
     # If no runtime values exist, don't save any plot
     if not any(np.isfinite(t) and t > 0 for times in runtime.values() for t in times):
-        print(f"No positive, finite runtimes for {title}; plot not saved", flush=True)
+        print(f"Saved {csv_path}; no positive runtimes to plot", flush=True)
         return
 
     # Plot figure
@@ -64,73 +68,38 @@ def plot_runtime(lengths, runtime, *, title, xlabel, filename):
     ax.spines[["top", "right"]].set_visible(False)
 
     fig.tight_layout()
-    output_path = Path(__file__).resolve().parent / filename
     fig.savefig(output_path)
     plt.close(fig)
 
-    print(f"Plot saved to {output_path}")
+    print(f"Saved {csv_path.name} and {output_path.name} in {output_path.parent}")
 
 def run_model_with_solvers(model, *, case, selected_solvers=None):
     """
     Build one formula, then evaluate it sequentially with each solver.
     """
 
-    # a) Fall back to the full registry of solvers if the caller didn't
-    #    hand-pick a subset (e.g. when running the full DPMC/Cachet/TensorOrder sweep)
     if selected_solvers is None:
         selected_solvers = available_solvers
-
-    # Every solver starts as None -> stays None if it never successfully
-    # returns a runtime (formula failure, solver crash, or invalid Z)
     runtimes = {name: None for name in selected_solvers}
-    print(f"\n--- {case} ---", flush=True)
+    if not selected_solvers:
+        return runtimes
 
-
-    # b) Build the WCNF formula once for this case. It's identical for every
-    # solver -> building & reusing it below avoids compute
-    build_start = perf_counter()
-
+    # Build once and reuse the formula for every solver.
     try:
         formula = model.build_partition_formula()
-    except Exception:
-        # No formula -> no solver can run this case at all, so log once and return early
-        print(f"Formula construction FAILED for {case}", file=sys.stderr, flush=True)
-        traceback.print_exc()
-
+    except Exception as error:
+        print(f"{case}: formula construction failed: {error}", file=sys.stderr)
         return runtimes
-    
-    build_elapsed = perf_counter() - build_start
 
-    # c) Run each solver against the shared formula
     for name, solver_class in selected_solvers.items():
-
-        start = perf_counter()
-        limit = getattr(solver_class, "default_timeout", 300)
-        print(f"[{name}] START {case}; solver limit={limit} s, container wait={limit + 30} s",
-              flush=True)
-        
         try:
-            # formula=formula reuses the shared build instead of having
-            # get_partition_function build its own
             result = model.get_partition_function(solver_class, formula=formula)
-
-        except Exception:
-            # Catches solver-side crashes
-            print(f"[{name}] FAILED {case} after {perf_counter() - start:.2f} s",
-                  file=sys.stderr, flush=True)
-            traceback.print_exc()
-
+        except Exception as error:
+            print(f"[{name}] {case}: failed: {error}", file=sys.stderr)
         else:
-            # If no crash, report time, log results & time, print timing info
-            elapsed = perf_counter() - start
             runtimes[name] = result.runtime
-            print(
-                f"[{name}] OK {case}: Z={result.model_count}, "
-                f"solver runtime={result.runtime:.6f} s, "
-                f"solver call elapsed={elapsed:.2f} s "
-                f"(shared formula build={build_elapsed:.2f} s)",
-                flush=True,
-            )
+            print(f"[{name}] {case}: Z={result.model_count:.6g}, "
+                  f"runtime={result.runtime:.6f} s", flush=True)
 
     return runtimes
 
@@ -159,12 +128,14 @@ def run_random_graph_experiment():
         for run in range(num_runs):
 
             # Create for all 5 runs individual sampled interactions (Rndm. Samlping)
-            h_interactions, j_interactions = IsingParameters(
-                length=curr_size, periodic=False
-            ).random_sampling(seed=run)
+            # -> Therefore needing individual seeds for different sampling
+            h_interactions, j_interactions = get_random_graph_parameters(
+                length=curr_size,
+                seed= run
+            )
 
             # Load model
-            model = IsingModelWMC(
+            model = IsingModel(
                 num_spins=curr_size,
                 j_interactions=j_interactions,
                 h_field=h_interactions,
@@ -196,8 +167,6 @@ def run_random_graph_experiment():
                 runtime[name].append(np.mean(times))
             else:
                 runtime[name].append(float("nan"))
-                print(f"[{name}] spins={curr_size}: incomplete five-run batch; "
-                      "no average plotted", flush=True)
 
     plot_runtime(
         num_spins_list, runtime,
@@ -218,17 +187,14 @@ def run_lattice_experiment(dimensions, lengths, *, title, xlabel, filename):
     for curr_size in lengths:
 
         # For one fixed length get parameters
-        parameters = IsingParameters(length=curr_size, periodic=False)
-
-        if dimensions == 1:
-            h_interactions, j_interactions = parameters.get_1dim_parameters()
-        else:
-            h_interactions, j_interactions = parameters.get_2dim_parameters()
+        h_interactions, j_interactions = get_lattice_parameters(
+            length=curr_size, dim=dimensions, periodic=False
+        )
 
         num_spins = curr_size ** dimensions
 
         # Load Up model and get part function with all solvers
-        model = IsingModelWMC(
+        model = IsingModel(
             num_spins=num_spins,
             j_interactions=j_interactions,
             h_field=h_interactions,
@@ -270,20 +236,55 @@ def run_2d_experiment():
         filename="ising_2dim.pdf",
     )
 
+def run_transversal_experiment():
+    """
+    Compare solvers for open transverse-field chains at fixed Trotter steps.
+    """
+    lengths = list(range(2, 9))
+    trotter_steps = 10
+    runtime = {name: [] for name in available_solvers}
+    print("\nTRANSVERSE-FIELD ISING EXPERIMENT", flush=True)
+
+    for length in lengths:
+        pairs = get_pairs(length=length, dim=1, periodic=False)
+        model = TransversalIsingModel(
+            num_spins=length,
+            j_constant=1.0,
+            g_constant=1.0,
+            beta=1.0,
+            trotter_steps=trotter_steps,
+            pairs=pairs,
+        )
+        results = run_model_with_solvers(
+            model, case=f"L={length}, Trotter steps={trotter_steps}"
+        )
+        for name, solver_runtime in results.items():
+            runtime[name].append(
+                solver_runtime if solver_runtime is not None else float("nan")
+            )
+
+    plot_runtime(
+        lengths, runtime,
+        title=f"Transverse-field Ising runtime ({trotter_steps} Trotter steps)",
+        xlabel="Chain length L",
+        filename="ising_transversal.pdf",
+    )
+
 # Run either experiment, or all
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Compare Ising solver runtimes.")
     parser.add_argument(
         "--experiment",
-        choices=("1d", "2d", "random", "all"),
+        choices=("1d", "2d", "random", "transversal", "all"),
         default="all"
     )
     parser.add_argument(
         "--solvers", nargs="+", choices=tuple(available_solvers),
         default=list(available_solvers),
-        help="Default: DPMC, fixed TensorOrder, and experimental Cachet (30 s limit).",
+        help="Default: DPMC, TensorOrder, and Cachet.",
     )
     args = parser.parse_args()
+    available_solvers = {name: available_solvers[name] for name in args.solvers}
     
     if args.experiment in ("1d", "all"):
         run_1d_experiment()
@@ -293,3 +294,6 @@ if __name__ == "__main__":
 
     if args.experiment in ("random", "all"):
         run_random_graph_experiment()
+
+    if args.experiment in ("transversal", "all"):
+        run_transversal_experiment()
