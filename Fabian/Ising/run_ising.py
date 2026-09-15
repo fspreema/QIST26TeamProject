@@ -23,7 +23,7 @@ from local_solvers import TensorOrderLocal
 available_solvers = {
     "DPMC": wmc.DPMC,
     "Cachet": wmc.Cachet,
-    "TensorOrder": TensorOrderLocal,
+    "TensorOrder": wmc.TensorOrder,
 }
 
 # Shared plotting function
