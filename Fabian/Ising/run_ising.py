@@ -13,18 +13,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import wcnf_matrix as wmc
 from ising_model import IsingModelWMC, IsingParameters
-from local_solvers import CachetExperimental, TensorOrderLocal
+from local_solvers import TensorOrderLocal
 
 # Shared solver selection
 available_solvers = {
     "DPMC": wmc.DPMC,
     "Cachet": wmc.Cachet,
     "TensorOrder": TensorOrderLocal,
-    "CachetExperimental": CachetExperimental,
 }
-# Include all three counter families; retain the experimental Cachet label.
-default_solvers = ("DPMC", "TensorOrder", "Cachet")
-solvers = {name: available_solvers[name] for name in default_solvers}
 
 # Shared plotting function
 def plot_runtime(lengths, runtime, *, title, xlabel, filename):
@@ -32,7 +28,7 @@ def plot_runtime(lengths, runtime, *, title, xlabel, filename):
     Save Runtime aagainst lattice size wuth CSV and print Plot as PDF
     """
 
-    # Preserve every selected counter in the output, including failed batches.
+    # Create csv file with runtime for individual solvers
     csv_path = Path(__file__).resolve().parent / Path(filename).with_suffix(".csv")
     with csv_path.open("w", newline="") as output:
         writer = csv.writer(output)
@@ -46,9 +42,13 @@ def plot_runtime(lengths, runtime, *, title, xlabel, filename):
             print(" | ".join([str(size), *[f"{v:.6f}" if isinstance(v, (float, np.floating))
                                          else str(v) for v in values]]), flush=True)
     print(f"Results saved to {csv_path}", flush=True)
+
+    # If no runtime values exist, don't save any plot
     if not any(np.isfinite(t) and t > 0 for times in runtime.values() for t in times):
         print(f"No positive, finite runtimes for {title}; plot not saved", flush=True)
         return
+
+    # Plot figure
     fig, ax = plt.subplots(figsize=(7, 4.5))
     for name, times in runtime.items():
         ax.plot(lengths, times, marker="o", linewidth=2, markersize=6, label=name)
@@ -78,7 +78,7 @@ def run_model_with_solvers(model, *, case, selected_solvers=None):
     # a) Fall back to the full registry of solvers if the caller didn't
     #    hand-pick a subset (e.g. when running the full DPMC/Cachet/TensorOrder sweep)
     if selected_solvers is None:
-        selected_solvers = solvers
+        selected_solvers = available_solvers
 
     # Every solver starts as None -> stays None if it never successfully
     # returns a runtime (formula failure, solver crash, or invalid Z)
@@ -146,14 +146,14 @@ def run_random_graph_experiment():
     # Init parameters & runtime
     num_spins_list = range(5,85,10)
     num_runs = 5
-    runtime = {name: [] for name in solvers}
+    runtime = {name: [] for name in available_solvers}
     print("\nRANDOM GRAPH ISING EXPERIMENT", flush=True)
 
     # Loop over graph sizes
     for curr_size in num_spins_list:
 
-        curr_runtimes = {name: [] for name in solvers}
-        active_solvers = dict(solvers)
+        curr_runtimes = {name: [] for name in available_solvers}
+        active_solvers = dict(available_solvers)
 
         # Loop over the 5 runs per size
         for run in range(num_runs):
@@ -212,7 +212,7 @@ def run_lattice_experiment(dimensions, lengths, *, title, xlabel, filename):
     Construct one lattice model per size and compare solvers on its formula.
     """
 
-    runtime = {name: [] for name in solvers}
+    runtime = {name: [] for name in available_solvers}
     print(f"\n{dimensions}D ISING EXPERIMENT", flush=True)
 
     for curr_size in lengths:
@@ -280,7 +280,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--solvers", nargs="+", choices=tuple(available_solvers),
-        default=list(default_solvers),
+        default=list(available_solvers),
         help="Default: DPMC, fixed TensorOrder, and experimental Cachet (30 s limit).",
     )
     args = parser.parse_args()
