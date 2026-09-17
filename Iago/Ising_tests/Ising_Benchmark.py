@@ -136,14 +136,14 @@ def save_and_plot(spin_range, timings, solvers, output_dir):
     print("\nSaved plot to 'scaling_benchmark.png' and raw data to 'benchmark_results.csv'.")
 
 if __name__ == "__main__":
-    test_spins = [10, 30, 50, 70, 90, 110, 130]
+    test_spins = [10, 50, 100, 150, 200, 250, 300]
     active_solvers = {
         "Cachet": Cachet,
         "DPMC": DPMC,
         "TensorOrder": TensorOrder
     }
 
-    Output_dir = "../Iago/Output/Run_3"
+    Output_dir = "../Iago/Output/Ising_1D/Run_4"
 
     timings, z_vals, ground_truth = run_ising(test_spins, active_solvers, J=1.5, h=0.5, beta=1.0)
     save_and_plot(test_spins, timings, active_solvers, Output_dir)
