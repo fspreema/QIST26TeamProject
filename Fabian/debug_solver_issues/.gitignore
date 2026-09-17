@@ -1,0 +1,4 @@
+__pycache__/
+cachet_diagnostic/*.o
+cachet_diagnostic/*.a
+cachet_diagnostic/cachet

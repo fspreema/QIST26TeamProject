@@ -1,0 +1,99 @@
+--- before/Fabian/Ising/run_ising.py
++++ after/Fabian/Ising/run_ising.py
+@@ -1,24 +1,30 @@
+ import argparse
++import csv
+ import sys
+ import traceback
+ from pathlib import Path
+ from time import perf_counter
+ 
+ # Make the local DiracWMC checkout available to this test script.
+-project_root = Path(__file__).resolve().parents[1]
++project_root = Path(__file__).resolve().parents[2]
+ sys.path.insert(0, str(project_root / "external" / "DiracWMC" / "wcnf_matrix"))
+ 
+ import matplotlib.pyplot as plt
+ import numpy as np
+ import wcnf_matrix as wmc
+ from ising_model import IsingModelWMC, IsingParameters
++from local_solvers import CachetExperimental, TensorOrderLocal
+ 
+ # Shared solver selection
+-solvers = {
++available_solvers = {
+     "DPMC": wmc.DPMC,
+     "Cachet": wmc.Cachet,
+-    "TensorOrder": wmc.TensorOrder,
++    "TensorOrder": TensorOrderLocal,
++    "CachetExperimental": CachetExperimental,
+ }
++# Include all three counter families; retain the experimental Cachet label.
++default_solvers = ("DPMC", "TensorOrder", "CachetExperimental")
++solvers = {name: available_solvers[name] for name in default_solvers}
+ 
+ # Shared plotting function
+ def plot_runtime(lengths, runtime, *, title, xlabel, filename):
+@@ -26,6 +32,20 @@
+     Plot and save a solver runtime comparison.
+     """
+ 
++    # Preserve every selected counter in the output, including failed batches.
++    csv_path = Path(__file__).resolve().parent / Path(filename).with_suffix(".csv")
++    with csv_path.open("w", newline="") as output:
++        writer = csv.writer(output)
++        writer.writerow([xlabel, *runtime])
++        print(f"\n{title}: solver runtime summary", flush=True)
++        print(" | ".join([xlabel, *runtime]), flush=True)
++        for index, size in enumerate(lengths):
++            values = [times[index] if np.isfinite(times[index]) else "FAILED"
++                      for times in runtime.values()]
++            writer.writerow([size, *values])
++            print(" | ".join([str(size), *[f"{v:.6f}" if isinstance(v, (float, np.floating))
++                                         else str(v) for v in values]]), flush=True)
++    print(f"Results saved to {csv_path}", flush=True)
+     if not any(np.isfinite(t) and t > 0 for times in runtime.values() for t in times):
+         print(f"No positive, finite runtimes for {title}; plot not saved", flush=True)
+         return
+@@ -83,7 +103,8 @@
+     # c) Run each solver against the shared formula
+     for name, solver_class in selected_solvers.items():
+         start = perf_counter()
+-        print(f"[{name}] START {case}; solver limit=300 s, container wait=330 s",
++        limit = getattr(solver_class, "default_timeout", 300)
++        print(f"[{name}] START {case}; solver limit={limit} s, container wait={limit + 30} s",
+               flush=True)
+         try:
+             # formula=formula reuses the shared build instead of having
+@@ -216,7 +237,7 @@
+     """
+ 
+     run_lattice_experiment(
+-        2, list(range(3, 8)),
++        2, list(range(2, 14,2)),
+         title="2D Ising model runtime",
+         xlabel="Lattice side length (L x L spins)",
+         filename="ising_2dim.pdf",
+@@ -230,7 +251,22 @@
+         choices=("1d", "2d", "random", "all"),
+         default="all"
+     )
++    parser.add_argument(
++        "--solvers", nargs="+", choices=tuple(available_solvers),
++        default=list(default_solvers),
++        help="Default: DPMC, fixed TensorOrder, and experimental Cachet (30 s limit).",
++    )
+     args = parser.parse_args()
++    solvers = {name: available_solvers[name] for name in args.solvers}
++    if "CachetExperimental" in solvers:
++        if not CachetExperimental.is_available():
++            parser.error(
++                "Experimental image is missing. From the project root run: "
++                "docker build --platform linux/amd64 -t fabian-cachet-experimental:1 "
++                "Fabian/Ising/local_solvers/cachet_build"
++            )
++        print("CachetExperimental: candidate repair; larger cases remain unvalidated. "
++              "Each solver run is limited to 30 seconds.", flush=True)
+ 
+     if args.experiment in ("1d", "all"):
+         run_1d_experiment()

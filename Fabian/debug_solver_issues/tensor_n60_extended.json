@@ -1,0 +1,11 @@
+{
+  "command": [
+    "python",
+    "/debug/tensor_extended_probe.py"
+  ],
+  "returncode": -9,
+  "timed_out": true,
+  "elapsed": 45.055410646000155,
+  "stdout": "",
+  "stderr": ""
+}

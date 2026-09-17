@@ -1,0 +1,7 @@
+{
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed": 8.496070296000006,
+  "stdout": "c processing CNF formula...\n\nc processing join tree...\nc getting join tree from stdin with 0s timer (end input with 'enter' then 'ctrl d')\nc processed join tree ending on line 2325\nc joinTreeWidth                 51\nc plannerSeconds                0.07163\nc getting join tree from stdin: done\nc killed planner process with pid 12\n\nc computing output...\nc sliceWidth                    51\nc threadMaxMemMegabytes         4000\nc maxDiagramLeaves              131073\nc maxDiagramNodes               1669216\nc ------------------------------------------------------------------\ns SATISFIABLE\nc s type wmc\nc s log10-estimate 19.5192\nc s exact double prec-sci 3.30493e+19\nc ------------------------------------------------------------------\nc seconds                       8.456\n",
+  "stderr": ""
+}

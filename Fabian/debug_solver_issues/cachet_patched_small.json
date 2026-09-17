@@ -1,0 +1,11 @@
+{
+  "command": [
+    "./cachet",
+    "/debug/small.cnf"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed": 0.020569875000035154,
+  "stdout": "cachet version 1.21, December 2005\ncopyright 2005, University of Washington\nincorporating code from zchaff, copyright 2004, Princeton University\nSolving /debug/small.cnf ......\nNumber of unit clauses\t\t\t0\n\nLearning\t\t\t\tON\nApproximate hashing\t\t\tON\nMultiple precision\t\t\tOFF\nStatic ordering\t\t\t\tOFF\nDynamic heuristic\t\t\tVSADS\n\nCache table size\t\t\t5242880\nOldest age allowed\t\t\t1048576\nMax cache entries\t\t\t20971520\nAdded cache entries\t\t\t6\nRemoved cache entries\t\t\t0\nNumber of cache hits\t\t\t0\nNumber of pos hits\t\t\t0\nNumber of neg hits\t\t\t0\nNumber of collisions\t\t\t0\n\nCross component implications\t\tON\nNumber of cross implications\t\t0\nBacktrack factor\t\t\t2\nNumber of far backtrack\t\t\t0\n\nNumber of total components\t\t6\nNumber of split components\t\t1\nNumber of non-split components\t\t4\nNumber of SAT residual formula\t\t5\nNumber of trivial components\t\t0\nNumber of changed components\t\t0\nNumber of adjusted components\t\t0\nFirst component split level\t\t0\n\nNumber of Decisions\t\t\t6\nMax Decision Level\t\t\t4\nNumber of Variables\t\t\t50\nOriginal Num Clauses\t\t\t100\nOriginal Num Literals\t\t\t312\nAdded Conflict Clauses\t\t\t2\nAdded Conflict Literals\t\t\t4\nDeleted Unrelevant clauses\t\t0\nDeleted Unrelevant literals\t\t0\nNumber of Implications\t\t\t92\nTotal Run Time\t\t\t\t0.003273\n\nSatisfying probability\t\t\t1.19209e-07\ns 134217728\nNumber of solutions 1.34218e+08\n\n\n",
+  "stderr": ""
+}

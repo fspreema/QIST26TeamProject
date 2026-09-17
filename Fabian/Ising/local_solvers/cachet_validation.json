@@ -1,0 +1,59 @@
+[
+  {
+    "case": "random_n4_seed0",
+    "expected": 32.063433528861445,
+    "success": true,
+    "Z": 32.06343196415627,
+    "elapsed": 1.5131074160017306,
+    "correct": true
+  },
+  {
+    "case": "random_n4_seed1",
+    "expected": 47.684675191895224,
+    "success": true,
+    "Z": 47.684662560628226,
+    "elapsed": 0.2999909589998424,
+    "correct": true
+  },
+  {
+    "case": "random_n6_seed0",
+    "expected": 297.6941389963773,
+    "success": true,
+    "Z": 297.69400716866477,
+    "elapsed": 0.3067267499936861,
+    "correct": true
+  },
+  {
+    "case": "random_n6_seed1",
+    "expected": 166.2802545996066,
+    "success": true,
+    "Z": 166.28017538059595,
+    "elapsed": 0.31461449999915203,
+    "correct": true
+  },
+  {
+    "case": "random_n8_seed0",
+    "expected": 1998.9485775763205,
+    "success": true,
+    "Z": 1998.9475289853744,
+    "elapsed": 0.32872491700254614,
+    "correct": true
+  },
+  {
+    "case": "isolated_spins",
+    "expected": 16.0,
+    "success": true,
+    "Z": 16.0,
+    "elapsed": 0.30435366600431735,
+    "correct": true
+  },
+  {
+    "case": "random_n40_seed0",
+    "expected": 7399314796722869.0,
+    "reference_success": true,
+    "success": false,
+    "Z": 0.0,
+    "elapsed": 15.39519554200524,
+    "correct": false
+  }
+]

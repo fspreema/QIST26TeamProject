@@ -1,0 +1,27 @@
+--- a/zchaff_solver.cpp
++++ b/zchaff_solver.cpp
+@@ -1487,7 +1487,7 @@
+ 		new_components = backup;	// restore new_components
+ 		//if (flag)
+ 		//	cout << "processing each new components:" << endl;
+-		for (; new_components > 0; ++itr, --new_components)
++		for (; new_components > 0; --new_components, (new_components > 0 ? ++itr : itr))
+ 		{
+ 			//if (flag)
+ 			//	cout << "processing component " << pos + 1 << endl;
+--- a/zchaff_dbase.cpp
++++ b/zchaff_dbase.cpp
+@@ -1,3 +1,4 @@
++#include <cstddef>
+ /*********************************************************************
+  Copyright 2000-2003, Princeton University.  All rights reserved. 
+  By using this software the USER indicates that he or she has read, 
+@@ -378,7 +379,7 @@
+     _lit_pool_end_storage = _lit_pool_start + new_size;
+ 
+     //update all the pointers
+-    int displacement = _lit_pool_start - old_start;
++    std::ptrdiff_t displacement = _lit_pool_start - old_start;
+     for (i=0; i< clauses().size(); ++i)
+ 	if (clause(i).status()!=DELETED_CL) 
+ 	    clause(i).first_lit() += displacement; 
