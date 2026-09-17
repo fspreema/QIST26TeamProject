@@ -48,6 +48,9 @@ class TransIsingModel:
 
     def partition_function(self, beta, accuracy = 10, concrete = False):
 
+        #For trotterization we replace beta with beta/accuracy
+        beta = beta/accuracy
+
         I = self.index
 
         #The projectors P_00 and A_00
