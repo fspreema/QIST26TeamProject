@@ -1,11 +1,11 @@
 
-from RBIM_model import RBIM_class
+from RBIM_model import RandomBondIsingModel
 
 
 
 if __name__ == "__main__":
     print("ding")
 
-    RBIM = RBIM_class()
+    RBIM = RandomBondIsingModel()
 
     RBIM.print_it()
