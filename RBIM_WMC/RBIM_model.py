@@ -6,10 +6,16 @@ import math
 SQRT2 = math.sqrt(2)
 
 class RandomBondIsingModel:
-    x = 69
+    x: int
+
+    def __init__(self):
+        self.x = 69
 
     def print_it(self):
         print(self.x)
+
+    def print_exp(self):
+        print(np.exp(self.x))
     
     def exp_Z(theta: float, I: Index) -> WCNFMatrix[float]: # taken from DiracWMC package
         x = BoolVar()

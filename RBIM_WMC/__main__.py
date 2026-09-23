@@ -1,5 +1,4 @@
-
-from RBIM_model import RandomBondIsingModel
+from RBIM_model import RBIM_class
 
 
 
@@ -9,3 +8,4 @@ if __name__ == "__main__":
     RBIM = RandomBondIsingModel()
 
     RBIM.print_it()
+    RBIM.print_exp()
