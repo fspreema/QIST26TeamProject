@@ -4,7 +4,13 @@ import matplotlib.pyplot as plt
 
 
 class RBIM_class:
-    x = 69
+    x: int
+
+    def __init__(self):
+        self.x = 69
 
     def print_it(self):
         print(self.x)
+
+    def print_exp(self):
+        print(np.exp(self.x))

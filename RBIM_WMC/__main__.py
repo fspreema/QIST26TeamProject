@@ -1,4 +1,3 @@
-
 from RBIM_model import RBIM_class
 
 
@@ -9,3 +8,4 @@ if __name__ == "__main__":
     RBIM = RBIM_class()
 
     RBIM.print_it()
+    RBIM.print_exp()
