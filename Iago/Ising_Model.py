@@ -48,15 +48,10 @@ def build_partition_function(n_spins, pairs, J, h, beta):
     spin_space = Index(2)
     p0 = ket(spin_space[0]) * bra(spin_space[0])
     p1 = ket(spin_space[1]) * bra(spin_space[1])
-    identity = p0 + p1
     spins = [Reg(spin_space) for i in range(n_spins)]
 
-    # Start with a global identity state
-    identity_factors = []
-    for i in range(n_spins):
-        identity_factors.append(identity | spins[i])
-
-    global_operator = reduce(lambda x, y: x * y, identity_factors)
+    identity_matrix = WCNFMatrix.identity(spin_space,n_spins)
+    global_operator = identity_matrix | spins
 
     # Multiply by Field Operators:
     exp_h = math.exp(beta * h) * p0 + math.exp(-beta * h) * p1
@@ -73,6 +68,58 @@ def build_partition_function(n_spins, pairs, J, h, beta):
 
     # Aligned spins get +J, anti-aligned spins get -J energy
     local_exp_J = exp_plus * q_plus + exp_minus * q_minus
+
+    for i, j in pairs:
+        global_operator = global_operator * (local_exp_J | (spins[i], spins[j]))
+
+    return global_operator
+
+def build_partition_function_opt(n_spins, pairs, J, h, beta):
+    """
+    Builds the logical formula for the partition function of the Ising Model
+    using the boolean formulation
+    """
+    
+    spin_space = Index(2)
+    p0 = ket(spin_space[0]) * bra(spin_space[0])
+    p1 = ket(spin_space[1]) * bra(spin_space[1])
+    spins = [Reg(spin_space) for i in range(n_spins)]
+
+    identity_matrix = WCNFMatrix.identity(spin_space,n_spins)
+    global_operator = identity_matrix | spins
+    q = spin_space.q
+
+    # Multiply by Field Operators:
+    a_field = get_var_rep_type()(q)
+    
+    weight_func_h = WeightFunction([*a_field.domain()])
+    weight_func_h.fill(1.0)
+    
+    spin_var = a_field.domain()[0] 
+    
+    weight_func_h[spin_var, True] = math.exp(beta * h)
+    weight_func_h[spin_var, False] = math.exp(-beta * h)
+    
+    exp_h_matrix = WCNFMatrix(spin_space, CNF(), weight_func_h, [a_field], [a_field])
+
+    for i in range(n_spins):
+        global_operator = global_operator * (exp_h_matrix | spins[i])
+
+    # Multiply by Interactions Operators:
+    exp_plus = math.exp(beta * J)
+    exp_minus = math.exp(-beta * J)
+
+    a, b = get_var_rep_type()(q), get_var_rep_type()(q)
+    c = BoolVar()
+    cnf_eq, aux_vars = a.equals_other_to_var(b, c) # c = True if spins aligned, c = False if not
+
+    weight_func = WeightFunction([*a.domain(), *b.domain(), c, *aux_vars])
+    weight_func.fill(1.0)
+    # Assign the weights to the corresponding "c" value
+    weight_func[c, True] = exp_plus
+    weight_func[c, False] = exp_minus
+
+    local_exp_J = WCNFMatrix(spin_space, cnf_eq, weight_func, [a, b], [a, b])
 
     for i, j in pairs:
         global_operator = global_operator * (local_exp_J | (spins[i], spins[j]))
@@ -96,7 +143,7 @@ def run_ising(spin_range, solvers, dim, J, h, beta):
     for L in spin_range:
         pairs, n_spins = generate_grid_pairs(dim, L)
 
-        logical_formula = build_partition_function(n_spins, pairs, J, h, beta)
+        logical_formula = build_partition_function_opt(n_spins, pairs, J, h, beta)
         cnf, weight_function = logical_formula.mat.trace_formula()
 
         row_output = f"{L:<4} | {n_spins:<4} | "
@@ -193,13 +240,13 @@ if __name__ == "__main__":
         "TensorOrder": TensorOrder
     }
     
-    J = 1.5
-    h = 0.5
+    J = 1.0
+    h = 1.0
     beta = 1.0
     dim = 2
-    L = [2, 3, 4, 5, 6, 7, 8]
+    L = [l for l in range(2,21)]
 
-    Output_dir = f"../Iago/Output/Ising_{dim}D/Run_4"
+    Output_dir = f"../Iago/Output/Ising_{dim}D/Run_6"
 
     timings, z_vals = run_ising(L, active_solvers, dim, J, h, beta)
     save_and_plot(L, dim, timings, active_solvers, Output_dir)
