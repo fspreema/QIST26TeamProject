@@ -17,9 +17,9 @@ Iteration 22.09-29.09
 - Should aslo work for other Ising Models, at best for Transverse field and Potts Model
 - Define precise inputs and outputs
 - Phase diagram if possible ( local derivative)
-- Plots we need
-- Runtime vs L or n = L × L
-- Runtime vs relative error( also use TNs where exact methods are to slow, Error with Trotterization or without(non Transverse field)
+- Plots we need:
+  - Runtime vs L or n = L × L
+  - Runtime vs relative error( also use TNs where exact methods are to slow, Error with Trotterization or without(non Transverse field)
  
 ## Optimization (where possible not a priority for now)
  
