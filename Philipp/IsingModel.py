@@ -32,7 +32,8 @@ class IsingModel:
         I = self.index
         Z = ket(I[0]) * bra(I[0]) - ket(I[1]) * bra(I[1])
 
-        ListofFactors = [(self.weights[w]*Z|self.registers[w[0]])*(self.weights[w]*Z|self.registers[w[1]]) for w in self.weights] + [(self.extfield[node]*Z) for node in self.extfield] 
+        ListofFactors = [(self.weights[w]*Z|self.registers[w[0]])*(self.weights[w]*Z|self.registers[w[1]]) for w in self.weights]
+        + [(self.extfield[node]*Z) for node in self.extfield] 
         #This list saves all factors of the Ising model
 
 
