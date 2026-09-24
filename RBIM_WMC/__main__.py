@@ -4,7 +4,7 @@ import time
 
 SOLVERS: tuple[type[ModelCounter], ...] = (DPMC, Cachet, TensorOrder,)
 
-def basic_RBIM_experiment(size):
+def basic_RBIM_experiment(size: int):
     BETA = 1.0
 
     model = RBIM.generate_square_lattice(size) # Use same model for all solvers
@@ -34,7 +34,6 @@ def basic_RBIM_experiment(size):
                 print("FAILURE")
                 break
         print(f"({size}, {runtime}, {error})", end=" ", flush=True)
-            
 
 if __name__ == "__main__":
     print("ding")
@@ -43,4 +42,4 @@ if __name__ == "__main__":
 
     RBIM = RandomBondIsingModel(size)
 
-    basic_RBIM_experiment(size)  
+    basic_RBIM_experiment(size)

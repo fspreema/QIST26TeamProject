@@ -13,7 +13,7 @@ Z_MATRIX = np.matrix([[1, 0], [0, -1]])
 class RandomBondIsingModel:
     # I : Index
 
-    def __init__(self, spin_count: int, *, interaction: dict[tuple[int, int],
+    def __init__(self, spin_count: int, interaction: dict[tuple[int, int],
         float] | None = None, external_field_x: float = 0.0, external_field_z:
         float = 0.0):
             """ Constructor """
@@ -43,7 +43,7 @@ class RandomBondIsingModel:
         existing = 0.0
         if add_to_existing:
             existing = self._interaction.get((i, j), 0.0)
-        self._interaction[i, j] = existing + strength
+        self._interaction[i, j] =  + strength
 
     def exp_z_rotation(self, theta: float, index: Index) -> WCNFMatrix[float]:
         """ Returns a Z-rotation matrix with angle theta """
