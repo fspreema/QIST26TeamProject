@@ -1,6 +1,8 @@
 from RBIM_model import RandomBondIsingModel
+from BenchMark import BenchMark
 from wcnf_matrix import ModelCounter, DPMC, Cachet, TensorOrder
 import time
+import numpy as np
 
 SOLVERS: tuple[type[ModelCounter], ...] = (DPMC, Cachet, TensorOrder,)
 
@@ -15,11 +17,11 @@ def basic_RBIM_experiment(size: int):
 
     print(f"Direct calculation time: {(tend_raw - tstart_raw)}")
 
-    problem = model.get_wcnf_matrix(BETA).trace_formula()
+    problem = model.get_wcnf(BETA)
 
     for solver in SOLVERS:
         model_counter = solver()
-        print(f"\nSquare lattice {solver.__name__}:")
+        print(f" - Square lattice {solver.__name__}:")
         
         failed = False
         runtime = 0.0
@@ -34,9 +36,16 @@ def basic_RBIM_experiment(size: int):
             if failed:
                 print("FAILURE")
                 break
-        print(f"({size}, {runtime}, {error})", end=" ", flush=True)
+        print(f"({size}, {runtime}, {error})", end="\n", flush=True)
 
 if __name__ == "__main__":
+    #size = 3
+    #basic_RBIM_experiment(size)
+    #print("==============")
 
-    size = 3
-    basic_RBIM_experiment(size)  
+    bm = BenchMark(RandomBondIsingModel, TensorOrder)
+
+    sides = np.arange(2,20,2)
+    shapes = [(int(n),int(n)) for n in sides]
+    bm.runtime_vs_lattice_benchMark(shapes, average = 4)
+

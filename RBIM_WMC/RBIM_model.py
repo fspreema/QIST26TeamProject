@@ -5,12 +5,13 @@ import math
 from functools import reduce
 from scipy.linalg import expm
 from typing import Iterable, Literal, Any
+from base_model import BaseModel
 
 SQRT2 = math.sqrt(2)
 X_MATRIX = np.matrix([[0, 1], [1, 0]])
 Z_MATRIX = np.matrix([[1, 0], [0, -1]])
 
-class RandomBondIsingModel:
+class RandomBondIsingModel(BaseModel):
     def __init__(self, spin_count: int, interaction: dict[tuple[int, int], float] | None = None):
             """ Constructor """
             self._spin_count = spin_count
@@ -54,28 +55,28 @@ class RandomBondIsingModel:
         x, y = LogVarRep(2, [x]), LogVarRep(2, [y])
         return WCNFMatrix(index, cnf, weight_func, [x, y], [x, y])
 
-    @staticmethod
-    def generate_lattice(shape: tuple[int, int], p_ferro= 0.5, seed: int= 42) -> RandomBondIsingModel:
+    @classmethod
+    def generate_lattice(cls: RandomBondIsingModel, shape: tuple[int, int], p_ferro= 0.5, seed: int= 42) -> RandomBondIsingModel:
         """ Generate a rectangular lattice Ising model with interaction strengths.
         The side lengths is given by shape """
         num_spins = shape[0] * shape[1]
-        model = RandomBondIsingModel(num_spins)
+        model = cls(num_spins)
         rng = np.random.default_rng(seed)
         # Interaction strengths
         for i in range(num_spins):
             if i + shape[0] < num_spins:
-                strength = RandomBondIsingModel.get_strength_value(p_ferro= p_ferro, rng= rng)
+                strength = cls.get_strength_value(p_ferro= p_ferro, rng= rng)
                 model[i, i + shape[0]] = strength
             if i % shape[0] != shape[0] - 1:
-                strength = RandomBondIsingModel.get_strength_value(p_ferro= p_ferro, rng= rng)
+                strength = cls.get_strength_value(p_ferro= p_ferro, rng= rng)
                 model[i, i + 1] = strength
         return model
 
-    @staticmethod
-    def generate_square_lattice(size: int, p_ferro= 0.5, seed: int= 42) -> RandomBondIsingModel:
+    @classmethod
+    def generate_square_lattice(cls: RandomBondIsingModel, size: int, p_ferro= 0.5, seed: int= 42) -> RandomBondIsingModel:
         """ Generate a square lattice Ising model with interaction strengths.
         The side length is given by size """
-        return RandomBondIsingModel.generate_lattice((size, size), p_ferro, seed)
+        return cls.generate_lattice((size, size), p_ferro, seed)
 
     @staticmethod
     def get_strength_value(p_ferro: float, rng: np.random.Generator) -> float:
@@ -123,7 +124,7 @@ class RandomBondIsingModel:
         # Partition function is Tr(e^(-beta*H))
         return expm(-beta * self.hamiltonian()).trace()
 
-    def get_wcnf_matrix(self, beta: float = 1.0) -> WCNFMatrix:
+    def get_wcnf(self, beta: float = 1.0) -> tuple[CNF, WeightFunction]:
         """ Convert the given Ising model to a WCNFMatrix, the trace of which is
             equal to the partition function of the Ising model at inverse
             temperature beta """
@@ -131,4 +132,4 @@ class RandomBondIsingModel:
         n = len(self)
         regs = [Reg(index) for _ in range(n)]
         interactions = reduce(lambda x, y: x * y, (self.exp_zz_rotation(beta * strength, index) | (regs[i], regs[j]) for i, j, strength in self.interactions()))
-        return (interactions).mat
+        return (interactions).mat.trace_formula()
