@@ -36,7 +36,7 @@ class RandomBondIsingModel:
         existing = 0.0
         if add_to_existing:
             existing = self._interaction.get((i, j), 0.0)
-        self._interaction[i, j] = existing + strength
+        self._interaction[i, j] =  + strength
 
     def exp_zz_rotation(self, theta: float, index: Index) -> WCNFMatrix[float]:
         """ Returns a ZZ-rotation matrix with angle theta """
