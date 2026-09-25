@@ -7,14 +7,15 @@ SOLVERS: tuple[type[ModelCounter], ...] = (DPMC, Cachet, TensorOrder,)
 def basic_RBIM_experiment(size):
     BETA = 1.0
 
-    model = RBIM.generate_square_lattice(size) # Use same model for all solvers
+    model = RandomBondIsingModel.generate_square_lattice(size) # Use same model for all solvers
 
     tstart_raw = time.time()
     true_value = model.partition_function(BETA)
     tend_raw = time.time()
+
     print(f"Direct calculation time: {(tend_raw - tstart_raw)}")
 
-    problem = RBIM.ising_to_wcnf_matrix(model, BETA).trace_formula()
+    problem = model.get_wcnf_matrix(BETA).trace_formula()
 
     for solver in SOLVERS:
         model_counter = solver()
@@ -37,10 +38,6 @@ def basic_RBIM_experiment(size):
             
 
 if __name__ == "__main__":
-    print("ding")
 
     size = 3
-
-    RBIM = RandomBondIsingModel(size)
-
     basic_RBIM_experiment(size)  
