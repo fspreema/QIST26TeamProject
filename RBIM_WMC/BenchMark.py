@@ -40,7 +40,7 @@ class BenchMark:
         results = []
         for m in models:
             tstart_raw = time.time()
-            true_value = m.partition_function(beta)
+            true_value = m.ising_to_wcnf_matrix(m, beta).trace_formula()
             tend_raw = time.time()
             result = tend_raw - tstart_raw
             results.append(result)

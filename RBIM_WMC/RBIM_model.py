@@ -117,6 +117,8 @@ class RandomBondIsingModel:
         # external_field = reduce(lambda x, y: x * y, (self.exp_z_rotation(beta * strength, index) | regs[i] for i, strength in enumerate(model.external_field)))
         return (interactions).mat
 
+    # ---------------------------- exact model -------------------------------------------------
+
     def partition_function(self, beta: float) -> float: # taken from DiracWMC package to compute exact Z
         """ Returns the exact partition function of the model, using
             matrix exponentiation, given the inverse temperature beta. This
