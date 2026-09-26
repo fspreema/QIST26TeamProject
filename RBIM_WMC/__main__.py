@@ -43,9 +43,14 @@ if __name__ == "__main__":
     #basic_RBIM_experiment(size)
     #print("==============")
 
-    bm = BenchMark(RandomBondIsingModel, TensorOrder)
+    bm = BenchMark(RandomBondIsingModel, DPMC)
 
-    sides = np.arange(2,20,2)
+    sides = np.arange(2,8,2)
     shapes = [(int(n),int(n)) for n in sides]
     bm.runtime_vs_lattice_benchMark(shapes, average = 4)
+
+    # calculates error for random bond chain
+    sides = np.arange(2,12,1)
+    shapes = [(int(n),1) for n in sides]
+    bm.error_vs_lattice_benchMark(shapes, average = 32)
 
