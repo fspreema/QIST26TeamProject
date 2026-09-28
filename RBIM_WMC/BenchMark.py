@@ -3,6 +3,7 @@ from wcnf_matrix import ModelCounter
 import time
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 
 class BenchMark:
@@ -89,6 +90,71 @@ class BenchMark:
         #fig.savefig(f"RBMI_WMC/Plots/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
         plt.show()
 
+    def Generate_GoundStateEnergy(self, shape: list, average: int = 5):
+        """This function calculates the Ground State Energy from a system by performing
+        the discrete derivative of -dln(Z)/dbeta for large beta"""
+
+        print(" = Start Benchmark =")
+
+        betas = np.arange(0.0, 5.1, 0.2)
+        ln_Z_values = []
+
+        for beta in betas:
+            models = []
+            for _ in range(average):
+                models.append(self._Model.generate_lattice(shape)) # We first create various models with the same size so we can average the time it takes to solve them
+
+            measured_runtimes, measured_errors, Z_values = self.run_solver(models, float(beta))
+
+            mean_Z = np.mean(Z_values)
+            ln_Z = np.log(mean_Z)
+            ln_Z_values.append(ln_Z)
+
+            print(f"shape = {shape} | beta = {beta:.1f} -> ln(Z) = {ln_Z:.4f}")
+
+        State_Energy = -np.gradient(ln_Z_values, betas)
+
+        solver_name = self._model_counter.__class__.__name__
+        label_text = f"{solver_name} (L={shape})"
+
+        # --- Plot ln(Z) vs beta ---
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+        ax.plot(betas, ln_Z_values, marker="o", linewidth=1.5, markersize=5, label=label_text)
+
+        ax.set_xlabel("Beta")
+        ax.set_ylabel("ln(Z)")
+
+        ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
+        ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
+
+        ax.legend(loc="best")
+        fig.tight_layout()
+
+        output_dir = "Plots/ln(Z)_vs_Beta"
+        os.makedirs(output_dir, exist_ok=True)
+        fig.savefig(f"{output_dir}/ln(Z)_vs_Beta_{shape}_{solver_name}.png", dpi=150)
+
+        # --- Plot Energy vs beta ---
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+        ax.plot(betas, State_Energy, marker="o", linewidth=1.5, markersize=5, label=label_text)
+
+        # ax.set_yscale("log")
+        ax.set_xlabel("Beta")
+        ax.set_ylabel("Energy")
+
+        ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
+        ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
+
+        ax.legend(loc="best")
+        fig.tight_layout()
+        
+        output_dir = "Plots/Energy_vs_Beta"
+        os.makedirs(output_dir, exist_ok=True)
+        fig.savefig(f"{output_dir}/Energy_vs_Beta_{shape}_{solver_name}.png", dpi=150)
+
+
     def run_solver(self, models: list[BaseModel], beta: float, true_values: list[float] = None) -> tuple[list[float], list[float]]:
         """ Solve the provided models by taking the WCNF and running it through
          the solver. Returns runtimes, and relative errors when true values are
@@ -97,6 +163,7 @@ class BenchMark:
 
         runtimes = []
         rel_errors = []
+        Z_values = []
 
         failed = False
         for i, result in enumerate(self._model_counter.batch_model_count(*problems)):
@@ -108,8 +175,9 @@ class BenchMark:
                 break
 
             runtimes.append(float(result.runtime))
+            Z_values.append(float(result.model_count))
             if true_values is not None:
                 rel_error = abs(result.model_count / true_values[i] - 1)
                 rel_errors.append(rel_error)
 
-        return runtimes, rel_errors
+        return runtimes, rel_errors, Z_values
