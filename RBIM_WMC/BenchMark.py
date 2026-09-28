@@ -3,6 +3,7 @@ from wcnf_matrix import ModelCounter
 import time
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 
 class BenchMark:
@@ -88,6 +89,107 @@ class BenchMark:
         fig.tight_layout()
         #fig.savefig(f"RBMI_WMC/Plots/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
         plt.show()
+
+    def magnetization_vs_beta_benchMark(self, shape: list, p_ferro: float = 1.0):
+        print("=== Calculating Magnetization ===")
+
+        model = self._Model.generate_lattice((shape[0], shape[1]), p_ferro=p_ferro)
+    
+        magnetization = []
+    
+        for beta in np.linspace(0.0, 5.0, 10):
+    
+            print("Computing M for beta = ", beta)
+    
+            problem_Z = model.get_wcnf(beta)
+            result_Z = self._model_counter.model_count(*problem_Z)
+            value_Z = result_Z.model_count
+    
+            magnetization_sum = 0.0
+            n_spins = len(model)
+    
+            for i in range(n_spins):
+                problem_op = model.get_wcnf_single_spin(target_spin = i, beta=beta)
+                result_op = self._model_counter.model_count(*problem_op)
+                value_Z_op = result_op.model_count
+    
+                magnetization_sum += (value_Z_op/value_Z)
+    
+            magnetization.append(magnetization_sum / n_spins)
+
+        betas = np.linspace(0.0, 5.0, 10)
+
+        # --- Plot ---
+        fig, ax = plt.subplots(figsize=(8, 5))
+    
+        ax.plot(betas, magnetization, marker="o", linewidth=1.5, markersize=5)
+    
+        ax.set_xlabel("Beta")
+        ax.set_ylabel("Magnetization")
+    
+        ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
+        ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
+    
+        fig.tight_layout()
+
+        output_dir = "Plots/Magnetization_vs_Beta"
+        os.makedirs(output_dir, exist_ok=True)
+        fig.savefig(f"{output_dir}/Magnetization_vs_Beta_{shape}.png", dpi=150)
+    
+        return magnetization
+
+    def magnetization_squared_vs_beta_benchMark(self, shape: list, p_ferro: float):
+        print("=== Calculating Magnetization Squared ===")
+
+        model = self._Model.generate_lattice((shape[0], shape[1]), p_ferro=p_ferro)
+    
+        magnetization_squared = []
+    
+        for beta in np.linspace(0.0, 5.0, 10):
+    
+            print("Computing M^2 for beta = ", beta)
+    
+            problem_Z = model.get_wcnf(beta)
+            result_Z = self._model_counter.model_count(*problem_Z)
+            value_Z = result_Z.model_count
+    
+            magnetization_sum = 0.0
+            n_spins = len(model)
+    
+            for i in range(n_spins):
+                for j in range(n_spins):
+                    if i == j: magnetization_sum += 1.0; continue # For <s_i s_i> = 1, no calculation needed
+                    problem_op = model.get_wcnf_double_spin(target_spins = (i,j), beta=beta)
+                    result_op = self._model_counter.model_count(*problem_op)
+                    value_Z_op = result_op.model_count
+    
+                    magnetization_sum += (value_Z_op/value_Z)
+    
+            magnetization_squared.append(magnetization_sum / (n_spins**2))
+
+        magnetization = np.sqrt(magnetization_squared)
+
+        betas = np.linspace(0.0, 5.0, 10)
+        
+        # --- Plot ---
+        fig, ax = plt.subplots(figsize=(8, 5))
+    
+        ax.plot(betas, magnetization, marker="o", linewidth=1.5, markersize=5)
+    
+        ax.set_xlabel("Beta")
+        ax.set_ylabel(r"$\sqrt{\text{M}^2}$")
+    
+        ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
+        ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
+    
+        fig.tight_layout()
+
+        output_dir = "Plots/Magnetization_squared_vs_Beta"
+        os.makedirs(output_dir, exist_ok=True)
+        fig.savefig(f"{output_dir}/Magnetization_squared_vs_Beta_{shape}.png", dpi=150)
+    
+        return magnetization
+
 
     def run_solver(self, models: list[BaseModel], beta: float, true_values: list[float] = None) -> tuple[list[float], list[float]]:
         """ Solve the provided models by taking the WCNF and running it through

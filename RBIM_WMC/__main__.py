@@ -61,20 +61,13 @@ def observable_test(size : int):
      
 
 if __name__ == "__main__":
-    #size = 3
-    #basic_RBIM_experiment(size)
-    #print("==============")
 
-    observable_test(2)
+    # observable_test(2)
 
     bm = BenchMark(RandomBondIsingModel, DPMC)
 
-    sides = np.arange(2,8,2)
-    shapes = [(int(n),int(n)) for n in sides]
-    bm.runtime_vs_lattice_benchMark(shapes, average = 4)
+    L = 3
 
-    # calculates error for random bond chain
-    sides = np.arange(2,12,1)
-    shapes = [(int(n),1) for n in sides]
-    bm.error_vs_lattice_benchMark(shapes, average = 32)
+    bm.magnetization_vs_beta_benchMark(shape = (L,L), p_ferro = 1.0)
+    bm.magnetization_squared_vs_beta_benchMark(shape = (L,L), p_ferro = 1.0)
 
