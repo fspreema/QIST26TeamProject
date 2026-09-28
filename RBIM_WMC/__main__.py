@@ -38,10 +38,34 @@ def basic_RBIM_experiment(size: int):
                 break
         print(f"({size}, {runtime}, {error})", end="\n", flush=True)
 
+def observable_test(size : int):
+    #model = RandomBondIsingModel.generate_square_lattice(size, p_ferro = 0.5)
+    model = RandomBondIsingModel.generate_lattice((1,2), p_ferro = 1)
+    model_counter = Cachet()
+
+    for beta in np.logspace(1,5,10):
+
+        problem_b = model.get_wcnf(beta)
+        result_b = model_counter.model_count(*problem_b)
+        value_b = result_b.model_count
+
+        problem_a = model.get_wcnf_with_operator(beta)
+        result_a = model_counter.model_count(*problem_a)
+        value_a = result_a.model_count
+
+
+
+        print(value_a/value_b)
+     
+
+     
+
 if __name__ == "__main__":
     #size = 3
     #basic_RBIM_experiment(size)
     #print("==============")
+
+    observable_test(2)
 
     bm = BenchMark(RandomBondIsingModel, DPMC)
 
