@@ -170,21 +170,21 @@ class RandomBondIsingModel(BaseModel):
     def get_wcnf_single_spin(self, target_spin: int, beta: float = 1.0) -> tuple[CNF, WeightFunction]:
         """ Convert the given Ising model to a WCNFMatrix, the trace of which is
             equal to the partition function times the operator Z of the Ising model at inverse
-            temperature beta for one certain spin. """
+            temperature beta for one certain spin """
         index = Index()
         n = len(self)
         regs = [Reg(index) for _ in range(n)]
 
-        operator = self.Z_Operator(index) | regs[target_spin]    
+        operator = self.Z_Operator(index) | regs[target_spin]
 
         interactions = reduce(lambda x, y: x * y, (self.exp_zz_rotation(beta * strength, index) | (regs[i], regs[j]) for i, j, strength in self.interactions()))
 
         return (operator * interactions).mat.trace_formula()
 
-    def get_wcnf_double_spin(self, target_spins: tuple[int, int], beta: float = 1.0) -> tuple[CNF, WeightFunction]:
+    def get_wcnf_double_spin(self, target_spins: tuple[int,int], beta: float = 1.0) -> tuple[CNF, WeightFunction]:
         """ Convert the given Ising model to a WCNFMatrix, the trace of which is
             equal to the partition function times the operator Z of the Ising model at inverse
-            temperature beta for two certain spins. """
+            temperature beta for two certain spins """
         index = Index()
         n = len(self)
         regs = [Reg(index) for _ in range(n)]
@@ -194,5 +194,28 @@ class RandomBondIsingModel(BaseModel):
         operator = operator_Z_i * operator_Z_j 
 
         interactions = reduce(lambda x, y: x * y, (self.exp_zz_rotation(beta * strength, index) | (regs[i], regs[j]) for i, j, strength in self.interactions()))
+
+        return (operator * interactions).mat.trace_formula()
+
+    def get_base_interaction(self, beta: float):
+        """Constructs the partition fucntion from the interaction hamiltonian"""
+        index = Index()
+        n = len(self)
+        regs = [Reg(index) for _ in range(n)]
+
+        interactions = reduce(lambda x, y: x * y, (self.exp_zz_rotation(beta * strength, index) | (regs[i], regs[j]) for i, j, strength in self.interactions()))
+
+        return index, regs, interactions
+
+    def apply_Z_to_base(self, target_spin: int, index: Index, regs: list, interactions):
+        """Applies the Z operator to the partiiton function for a target spin"""
+        operator = self.Z_Operator(index) | regs[target_spin]
+        return (operator * interactions).mat.trace_formula()
+
+    def apply_ZZ_to_base(self, target_spins: tuple[int,int], index: Index, regs: list, interactions):
+        """Applies the ZZ operator to the partiiton function for a couple of target spins"""
+        operator_Z_i = self.Z_Operator(index) | regs[target_spins[0]] 
+        operator_Z_j = self.Z_Operator(index) | regs[target_spins[1]] 
+        operator = operator_Z_i * operator_Z_j 
 
         return (operator * interactions).mat.trace_formula()

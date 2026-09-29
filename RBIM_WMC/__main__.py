@@ -67,7 +67,21 @@ if __name__ == "__main__":
     bm = BenchMark(RandomBondIsingModel, DPMC)
 
     L = 3
+    betas = np.linspace(0.0, 3.0, 10)
 
-    bm.magnetization_vs_beta_benchMark(shape = (L,L), p_ferro = 1.0)
-    bm.magnetization_squared_vs_beta_benchMark(shape = (L,L), p_ferro = 1.0)
+    start_1 = time.perf_counter()
+    bm.magnetization_vs_beta_benchMark(shape=(L, L), betas=betas, p_ferro=1.0)
+    end_1 = time.perf_counter()
+    time_mag = end_1 - start_1
+
+    start_2 = time.perf_counter()
+    bm.magnetization_squared_vs_beta_benchMark(shape=(L, L), betas=betas, p_ferro=1.0)
+    end_2 = time.perf_counter()
+    time_mag2 = end_2 - start_2
+
+    print("\n" + "="*40)
+    print("        Results        ")
+    print("="*40)
+    print(f"Time Magnetizaiton:   {time_mag:.4f} seconds")
+    print(f"Time Magnetization Squared:   {time_mag2:.4f} seconds")
 
