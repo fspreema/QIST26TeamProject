@@ -12,7 +12,7 @@ class BenchMark:
         self._Model:BaseModel = Model
         self._model_counter = solver()
 
-    def runtime_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0):
+    def runtime_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, plot=False):
 
         runtime_values = []
 
@@ -22,7 +22,7 @@ class BenchMark:
             for _ in range(average):
                 models.append(self._Model.generate_lattice(shape)) # We first create various models with the same size so we can average the time it takes to solve them
 
-            measured_runtimes, _ = self.run_solver(models, beta)
+            measured_runtimes, _, _ = self.run_solver(models, beta)
             average_runtime = np.average(measured_runtimes)
             runtime_values.append(average_runtime)
 
@@ -30,21 +30,24 @@ class BenchMark:
 
         number_of_spins = [shape[0] * shape[1] for shape in shapes]
 
-        # --- Plot ---
-        fig, ax = plt.subplots(figsize=(8, 5))
+        if (plot):
+            # --- Plot ---
+            fig, ax = plt.subplots(figsize=(8, 5))
 
-        ax.plot(number_of_spins, runtime_values, marker="o", linewidth=1.5, markersize=5)
+            ax.plot(number_of_spins, runtime_values, marker="o", linewidth=1.5, markersize=5)
 
-        ax.set_yscale("log")
-        ax.set_xlabel("N (# spins)")
-        ax.set_ylabel("Runtime average (s)")
+            ax.set_yscale("log")
+            ax.set_xlabel("N (# spins)")
+            ax.set_ylabel("Runtime average (s)")
 
-        ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
-        ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
+            ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
+            ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
 
-        fig.tight_layout()
-        #fig.savefig(f"RBMI_WMC/Plots/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
-        plt.show()
+            fig.tight_layout()
+            #fig.savefig(f"RBMI_WMC/Plots/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
+            plt.show()
+
+        return runtime_values
 
     def error_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0):
 
