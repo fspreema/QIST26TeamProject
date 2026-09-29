@@ -1,6 +1,6 @@
 # General
  
-- Use Try, Catch and Exceptions in your Code ( and COMMENT EVERYYTHING WELL!!!)
+- Use Try, Catch and Exceptions in your Code ( and COMMENT EVERYTHING WELL!!!)
 - Also log your mathematical understanding, difficulties, and insights.
  
 <br>
