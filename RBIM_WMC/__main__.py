@@ -36,19 +36,11 @@ def shape_vs_runtime(max_size : tuple[int,int]= (3,3), solver : ModelCounter = T
 
     plt.show()
 
-if __name__ == "__main__":
-
-    # observable_test(2)
-
-    shape_vs_runtime((12,12), Cachet)
-
+def magnetization_vs_beta(shape: tuple[int,int], betas: list, p_ferro: float = 1.0):
     bm = BenchMark(RandomBondIsingModel, DPMC)
 
-    L = 2
-    betas = np.linspace(0.0, 3.0, 10)
-
     start_1 = time.perf_counter()
-    bm.magnetization_vs_beta_benchMark(shape=(L, L), betas=betas, p_ferro=1.0)
+    bm.magnetization_vs_beta_benchMark(shape=shape, betas=betas, p_ferro=1.0)
     end_1 = time.perf_counter()
     time_mag = end_1 - start_1
 
@@ -62,6 +54,15 @@ if __name__ == "__main__":
     print("="*40)
     print(f"Time Magnetizaiton:   {time_mag:.4f} seconds")
     print(f"Time Magnetization Squared:   {time_mag2:.4f} seconds")
+
+
+if __name__ == "__main__":
+
+    shape_vs_runtime((12,12), Cachet)
+
+    L = 2
+    magnetization_vs_beta(shape=(L, L), betas=np.linspace(0.0, 3.0, 10), p_ferro=1.0)
+
     # sides = np.arange(2,8,2)
     # shapes = [(int(n),int(n)) for n in sides]
     # bm.runtime_vs_lattice_benchMark(shapes, average = 4)
