@@ -40,12 +40,12 @@ def magnetization_vs_beta(shape: tuple[int,int], betas: list, p_ferro: float = 1
     bm = BenchMark(RandomBondIsingModel, DPMC)
 
     start_1 = time.perf_counter()
-    bm.magnetization_vs_beta_benchMark(shape=shape, betas=betas, p_ferro=1.0)
+    bm.magnetization_vs_beta_benchMark(shape=shape, betas=betas, p_ferro=p_ferro)
     end_1 = time.perf_counter()
     time_mag = end_1 - start_1
 
     start_2 = time.perf_counter()
-    bm.magnetization_squared_vs_beta_benchMark(shape=(L, L), betas=betas, p_ferro=1.0)
+    bm.magnetization_squared_vs_beta_benchMark(shape=shape, betas=betas, p_ferro=p_ferro)
     end_2 = time.perf_counter()
     time_mag2 = end_2 - start_2
 

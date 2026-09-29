@@ -203,3 +203,102 @@ class RandomBondIsingModel(BaseModel):
         operator = operator_Z_i * operator_Z_j 
 
         return (operator * interactions).mat.trace_formula()
+
+    def apply_ZZZZ_to_base(self, target_spins: tuple[int,int,int,int], index: Index, regs: list, interactions):
+        """Applies the ZZZZ operator to the partiiton function for a series of target spins"""
+        operator_Z_i = self.Z_Operator(index) | regs[target_spins[0]] 
+        operator_Z_j = self.Z_Operator(index) | regs[target_spins[1]]
+        operator_Z_k = self.Z_Operator(index) | regs[target_spins[2]]
+        operator_Z_l = self.Z_Operator(index) | regs[target_spins[3]] 
+        operator = operator_Z_i * operator_Z_j * operator_Z_k * operator_Z_l
+
+        return (operator * interactions).mat.trace_formula()
+
+    def compute_expected_q(self, size: int, beta: float, p_ferro: float = 1.0):
+    
+        model = self._Model.generate_lattice((size, size), p_ferro=p_ferro)
+        index, regs, interactions_base = model.get_base_interaction(beta) # Only compute interaction once
+
+        problem_Z = interactions_base.mat.trace_formula()
+        result_Z = self._model_counter.model_count(*problem_Z)
+        value_Z = result_Z.model_count
+
+        spin_squared_sum = 0.0
+        n_spins = len(model)
+
+        for i in range(n_spins):
+            problem_op = model.apply_Z_to_base(target_spin = i, index=index, regs=regs, interactions=interactions_base)
+            result_op = self._model_counter.model_count(*problem_op)
+            value_Z_op = result_op.model_count
+
+            spin_squared_sum += (value_Z_op/value_Z)**2 # sum of <s_i>^2
+
+        return (spin_squared_sum / (size**2))
+
+    def compute_expected_q_squared(self, size: int, beta: float, p_ferro: float = 1.0):
+        """ Total iterations over the solver are combinations of (N 2) """
+        
+        model = self._Model.generate_lattice((size, size), p_ferro=p_ferro)
+        index, regs, interactions_base = model.get_base_interaction(beta) # Only compute interaction once
+
+        problem_Z = interactions_base.mat.trace_formula()
+        result_Z = self._model_counter.model_count(*problem_Z)
+        value_Z = result_Z.model_count
+
+        spins_squared_sum = 0.0
+        n_spins = len(model)
+
+        spins_squared_sum += n_spins # Add up the diagonal where <s_i s_i> = 1
+
+        for i in range(n_spins):
+            for j in range(i + 1, n_spins):
+                problem_op = model.apply_ZZ_to_base(target_spins = (i,j), index=index, regs=regs, interactions=interactions_base)
+                result_op = self._model_counter.model_count(*problem_op)
+                value_Z_op = result_op.model_count
+
+                # Double the result as pairs (i,j) and (j,i) are equivalent
+                spins_squared_sum += 2 * (value_Z_op/value_Z)**2
+
+        return (spins_squared_sum / (size**4))
+
+    def compute_expected_q_4(self, size: int, beta: float, p_ferro: float = 1.0):
+        """ Total iterations over the solver are combinations of (N 4) """
+            
+        model = self._Model.generate_lattice((size, size), p_ferro=p_ferro)
+        index, regs, interactions_base = model.get_base_interaction(beta) # Only compute interaction once
+
+        problem_Z = interactions_base.mat.trace_formula()
+        result_Z = self._model_counter.model_count(*problem_Z)
+        value_Z = result_Z.model_count
+
+        spins_squared_sum = 0.0
+        n_spins = len(model)
+
+        spins_squared_sum += n_spins # Sum over i=j=k=l, total N spins
+        spins_squared_sum += 3 * n_spins * (n_spins - 1) # Sum over combinations of i=j!=k=l, total 3N(N-1) combiantions
+
+        # Sum over combinations of i=j=k!l or i=j!=k!=k, total 12N-16 combinations
+        weight_2_point = (12 * n_spins) - 16
+
+        for i in range(n_spins):
+            for j in range(i + 1, n_spins):
+                problem_op = model.apply_ZZ_to_base(target_spins=(i,j), index=index, regs=regs, interactions=interactions_base)
+                result_op = self._model_counter.model_count(*problem_op)
+                value_Z_op = result_op.model_count
+
+                corr_squared = (value_Z_op / value_Z)**2
+                spins_squared_sum += weight_2_point * corr_squared
+
+        # Sum over combinations of i!=j!=k!=l
+        for i in range(n_spins):
+            for j in range(i + 1, n_spins):
+                for k in range(j + 1, n_spins):
+                    for l in range(k + 1, n_spins):
+                        problem_op = model.apply_ZZZZ_to_base(target_spins=(i,j,k,l), index=index, regs=regs, interactions=interactions_base)
+                        result_op = self._model_counter.model_count(*problem_op)
+                        value_Z_op = result_op.model_count
+
+                        corr_squared = (value_Z_op / value_Z)**2
+                        spins_squared_sum += 24 * corr_squared
+
+        return (spins_squared_sum / (size**8))
