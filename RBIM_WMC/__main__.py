@@ -7,8 +7,6 @@ import matplotlib.pyplot as plt
 
 SOLVERS: tuple[type[ModelCounter], ...] = (DPMC, Cachet, TensorOrder,)  
 
-
-
 def shape_vs_runtime(max_size : tuple[int,int]= (3,3), solver : ModelCounter = TensorOrder):
     bm = BenchMark(RandomBondIsingModel, solver)
 
@@ -34,33 +32,7 @@ def shape_vs_runtime(max_size : tuple[int,int]= (3,3), solver : ModelCounter = T
     ax.set_yticks(np.arange(1,max_size[1]+1))
     fig.colorbar(image, ax=ax, label="runtime [s]")
 
-    plt.show()
-
-
-def shape_vs_runtime(max_size : tuple[int,int]= (3,3), solver : ModelCounter = TensorOrder):
-    bm = BenchMark(RandomBondIsingModel, solver)
-
-    shapes = []
-    for y in range(1,max_size[1]+1):
-        for x in range(1,max_size[0]+1):
-            if (x == 1 and y == 1):
-                continue
-            shapes.append((x,y))
-
-    runtimes = bm.runtime_vs_lattice_benchMark(shapes, average = 8)
-    runtimes.insert(0, 0)
-
-    z = np.asarray(runtimes).reshape((max_size[1],max_size[0]))
-
-    fig, ax = plt.subplots()
-
-    image = ax.imshow(z,aspect="equal",cmap="viridis", extent=[0.5,max_size[0]+0.5,0.5,max_size[1]+0.5])
-    ax.set_xlabel("lattice size x")
-    ax.set_ylabel("lattice size y")
-    ax.set_title("runtime by lattice size")
-    ax.set_xticks(np.arange(1,max_size[0]+1))
-    ax.set_yticks(np.arange(1,max_size[1]+1))
-    fig.colorbar(image, ax=ax, label="runtime [s]")
+    plt.tight_layout()
 
     plt.show()
 
@@ -70,7 +42,7 @@ if __name__ == "__main__":
 
     shape_vs_runtime((12,12), Cachet)
 
-    # bm = BenchMark(RandomBondIsingModel, DPMC)
+    bm = BenchMark(RandomBondIsingModel, DPMC)
 
     L = 2
     betas = np.linspace(0.0, 3.0, 10)
