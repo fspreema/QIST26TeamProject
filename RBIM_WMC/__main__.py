@@ -40,8 +40,8 @@ def basic_RBIM_experiment(size: int):
         print(f"({size}, {runtime}, {error})", end="\n", flush=True)
 
 
-def shape_vs_runtime(max_size : tuple[int,int]= (3,3)):
-    bm = BenchMark(RandomBondIsingModel, Cachet)
+def shape_vs_runtime(max_size : tuple[int,int]= (3,3), solver : ModelCounter = TensorOrder):
+    bm = BenchMark(RandomBondIsingModel, solver)
 
     shapes = []
     for y in range(1,max_size[1]+1):
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     #basic_RBIM_experiment(size)
     #print("==============")
 
-    shape_vs_runtime((12,12))
+    shape_vs_runtime((12,12), Cachet)
 
     # bm = BenchMark(RandomBondIsingModel, DPMC)
 
