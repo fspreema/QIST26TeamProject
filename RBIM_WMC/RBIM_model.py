@@ -150,22 +150,6 @@ class RandomBondIsingModel(BaseModel):
         interactions = reduce(lambda x, y: x * y, (self.exp_zz_rotation(beta * strength, index) | (regs[i], regs[j]) for i, j, strength in self.interactions()))
         return (interactions).mat.trace_formula()
 
-    def get_wcnf_with_operator(self, beta: float = 1.0) -> tuple[CNF, WeightFunction]:
-        """ Convert the given Ising model to a WCNFMatrix, the trace of which is
-            equal to the partition function times the operator Z of the Ising model at inverse
-            temperature beta """
-        index = Index()
-        n = len(self)
-        regs = [Reg(index) for _ in range(n)]
-
-        operator = reduce(lambda x, y: x + y, (((1./n) * self.Z_Operator(index) | regs[i]) for i in range(n))) # We have zero division due to trace 0 of Z matrix
-
-        interactions = reduce(lambda x, y: x * y, (self.exp_zz_rotation(beta * strength, index) | (regs[i], regs[j]) for i, j, strength in self.interactions()))
-
-        print(value(operator))
-
-        return (operator*interactions).mat.trace_formula()
-
 
     def get_wcnf_single_spin(self, target_spin: int, beta: float = 1.0) -> tuple[CNF, WeightFunction]:
         """ Convert the given Ising model to a WCNFMatrix, the trace of which is
