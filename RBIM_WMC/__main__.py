@@ -5,40 +5,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-SOLVERS: tuple[type[ModelCounter], ...] = (DPMC, Cachet, TensorOrder,)
-
-def basic_RBIM_experiment(size: int):
-    BETA = 1.0
-
-    model = RandomBondIsingModel.generate_square_lattice(size) # Use same model for all solvers
-
-    tstart_raw = time.time()
-    true_value = model.partition_function(BETA)
-    tend_raw = time.time()
-
-    print(f"Direct calculation time: {(tend_raw - tstart_raw)}")
-
-    problem = model.get_wcnf(BETA)
-
-    for solver in SOLVERS:
-        model_counter = solver()
-        print(f" - Square lattice {solver.__name__}:")
-        
-        failed = False
-        runtime = 0.0
-        error = 0.0
-
-        for result in model_counter.batch_model_count(problem):
-            if not result.success:
-                    failed = True
-                    break
-            runtime += result.runtime
-            error += abs(result.model_count / true_value - 1)
-            if failed:
-                print("FAILURE")
-                break
-        print(f"({size}, {runtime}, {error})", end="\n", flush=True)
-
+SOLVERS: tuple[type[ModelCounter], ...] = (DPMC, Cachet, TensorOrder,)  
 
 def shape_vs_runtime(max_size : tuple[int,int]= (3,3), solver : ModelCounter = TensorOrder):
     bm = BenchMark(RandomBondIsingModel, solver)
@@ -65,6 +32,8 @@ def shape_vs_runtime(max_size : tuple[int,int]= (3,3), solver : ModelCounter = T
     ax.set_yticks(np.arange(1,max_size[1]+1))
     fig.colorbar(image, ax=ax, label="runtime [s]")
 
+    plt.tight_layout()
+
     plt.show()
 
 def p_vs_runtime(shape: tuple[int,int] = (6,6), solver: ModelCounter = Cachet):
@@ -75,14 +44,31 @@ def p_vs_runtime(shape: tuple[int,int] = (6,6), solver: ModelCounter = Cachet):
 
 
 if __name__ == "__main__":
-    #size = 3
-    #basic_RBIM_experiment(size)
-    #print("==============")
+
+    # observable_test(2)
 
     #shape_vs_runtime((12,12), Cachet)
 
-    # bm = BenchMark(RandomBondIsingModel, DPMC)
+    bm = BenchMark(RandomBondIsingModel, DPMC)
 
+    L = 2
+    betas = np.linspace(0.0, 3.0, 10)
+
+    start_1 = time.perf_counter()
+    bm.magnetization_vs_beta_benchMark(shape=(L, L), betas=betas, p_ferro=1.0)
+    end_1 = time.perf_counter()
+    time_mag = end_1 - start_1
+
+    start_2 = time.perf_counter()
+    bm.magnetization_squared_vs_beta_benchMark(shape=(L, L), betas=betas, p_ferro=1.0)
+    end_2 = time.perf_counter()
+    time_mag2 = end_2 - start_2
+
+    print("\n" + "="*40)
+    print("        Results        ")
+    print("="*40)
+    print(f"Time Magnetizaiton:   {time_mag:.4f} seconds")
+    print(f"Time Magnetization Squared:   {time_mag2:.4f} seconds")
     # sides = np.arange(2,8,2)
     # shapes = [(int(n),int(n)) for n in sides]
     # bm.runtime_vs_lattice_benchMark(shapes, average = 4)
