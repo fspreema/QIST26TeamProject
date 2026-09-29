@@ -67,21 +67,32 @@ def shape_vs_runtime(max_size : tuple[int,int]= (3,3), solver : ModelCounter = T
 
     plt.show()
 
+def p_vs_runtime(shape: tuple[int,int] = (6,6), solver: ModelCounter = Cachet):
+    bm = BenchMark(RandomBondIsingModel, solver)
+
+    p_values = np.linspace(0, 1, 21)
+    bm.runtime_vs_p_benchMark(shape, p_values, average = 50, save = True)
+
+
 if __name__ == "__main__":
     #size = 3
     #basic_RBIM_experiment(size)
     #print("==============")
 
-    shape_vs_runtime((12,12), Cachet)
+    #shape_vs_runtime((12,12), Cachet)
 
     # bm = BenchMark(RandomBondIsingModel, DPMC)
 
     # sides = np.arange(2,8,2)
     # shapes = [(int(n),int(n)) for n in sides]
     # bm.runtime_vs_lattice_benchMark(shapes, average = 4)
-
+    
     # # calculates error for random bond chain
     # sides = np.arange(2,12,1)
     # shapes = [(int(n),1) for n in sides]
     # bm.error_vs_lattice_benchMark(shapes, average = 32)
-
+    
+    p_vs_runtime((6,6), Cachet)
+    
+    print("End of the program")
+        

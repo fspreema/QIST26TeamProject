@@ -1,3 +1,4 @@
+from __future__ import annotations
 from wcnf_matrix import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,6 +7,7 @@ from functools import reduce
 from scipy.linalg import expm
 from typing import Iterable, Literal, Any
 from base_model import BaseModel
+
 
 SQRT2 = math.sqrt(2)
 X_MATRIX = np.matrix([[0, 1], [1, 0]])
