@@ -14,6 +14,10 @@ local_space = Index (2)
 #      (0 ,-1)
 Z  = ket ( local_space [0]) * bra ( local_space [0]) - ( ket ( local_space [1]) * bra ( local_space [1]) )
 
+# X  = (0 , 1)
+#      (1 , 0)
+X = ket(local_space[0])*bra(local_space[1]) + ket(local_space[1])*bra(local_space[0])
+
 # Id = (1 , 0)
 #      (0 , 1)
 Id = ket ( local_space [0]) * bra ( local_space [0]) +   ket ( local_space [1]) * bra ( local_space [1])
@@ -48,10 +52,10 @@ interaction_term = reduce(lambda x, y: x + y, interaction_factors)
 
 external_factors = []
 for _ in range(n_spins):
-    external_factors.append((-h * Z) | spins[_])
+    external_factors.append((-h * X) | spins[_])
 external_term = reduce(lambda x, y: x + y, external_factors)
 
-H = (interaction_term + external_term)
+H = interaction_term + external_term
 
 
 

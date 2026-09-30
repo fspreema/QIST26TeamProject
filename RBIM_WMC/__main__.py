@@ -17,7 +17,12 @@ def shape_vs_runtime(max_size : tuple[int,int]= (3,3), solver : ModelCounter = T
                 continue
             shapes.append((x,y))
 
-    runtimes = bm.runtime_vs_lattice_benchMark(shapes, average = 8)
+    runtimes = []
+    for shape in shapes:
+        models = [RandomBondIsingModel.generate_lattice(shape, seed=i) for i in range(8)]
+        measured_runtimes, _, _ = bm.run_solver(models, 1.0)
+        runtimes.append(np.average(measured_runtimes))
+        print(f"shape = {shape} -> {runtimes[-1]} s")
     runtimes.insert(0, 0)
 
     z = np.asarray(runtimes).reshape((max_size[1],max_size[0]))

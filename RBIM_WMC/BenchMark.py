@@ -12,7 +12,7 @@ class BenchMark:
         self._Model:BaseModel = Model
         self._model_counter = solver()
 
-    def runtime_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, plot=False):
+    def runtime_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, save: bool = False):
 
         runtime_values = []
 
@@ -30,26 +30,27 @@ class BenchMark:
 
         number_of_spins = [shape[0] * shape[1] for shape in shapes]
 
-        if (plot):
-            # --- Plot ---
-            fig, ax = plt.subplots(figsize=(8, 5))
 
-            ax.plot(number_of_spins, runtime_values, marker="o", linewidth=1.5, markersize=5)
+        # --- Plot ---
+        fig, ax = plt.subplots(figsize=(8, 5))
 
-            ax.set_yscale("log")
-            ax.set_xlabel("N (# spins)")
-            ax.set_ylabel("Runtime average (s)")
+        ax.plot(number_of_spins, runtime_values, marker="o", linewidth=1.5, markersize=5)
 
-            ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
-            ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
+        ax.set_yscale("log")
+        ax.set_xlabel("N (# spins)")
+        ax.set_ylabel("Runtime average (s)")
 
-            fig.tight_layout()
-            #fig.savefig(f"RBMI_WMC/Plots/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
-            plt.show()
+        ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
+        ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
 
-        return runtime_values
+        fig.tight_layout()
+        if save:
+            output_dir = "Plots/Runtime_vs_Lattice"
+            os.makedirs(output_dir, exist_ok=True)
+            fig.savefig(f"{output_dir}/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
+        plt.show()
 
-    def error_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0):
+    def error_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, save: bool = False):
 
         runtime_values = []
         error_values = []
@@ -90,7 +91,8 @@ class BenchMark:
         ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
 
         fig.tight_layout()
-        #fig.savefig(f"RBMI_WMC/Plots/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
+        if save:
+            fig.savefig(f"RBMI_WMC/Plots/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
         plt.show()
 
     def Generate_GoundStateEnergy(self, shape: list, average: int = 5):
@@ -157,7 +159,6 @@ class BenchMark:
         os.makedirs(output_dir, exist_ok=True)
         fig.savefig(f"{output_dir}/Energy_vs_Beta_{shape}_{solver_name}.png", dpi=150)
 
-
     def magnetization_vs_beta_benchMark(self, shape: list, betas: list, p_ferro: float = 1.0):
         print("=== Calculating Magnetization ===")
 
@@ -166,8 +167,26 @@ class BenchMark:
         magnetization = []
     
         for beta in betas:
+    
             print("Computing M for beta = ", beta)
-            magnetization.append(model.compute_expected_M(self._model_counter, beta))
+
+            index, regs, interactions_base = model.get_base_interaction(beta) # Only compute interaction once per beta value
+    
+            problem_Z = interactions_base.mat.trace_formula()
+            result_Z = self._model_counter.model_count(*problem_Z)
+            value_Z = result_Z.model_count
+    
+            magnetization_sum = 0.0
+            n_spins = len(model)
+    
+            for i in range(n_spins):
+                problem_op = model.apply_Z_to_base(target_spin = i, index=index, regs=regs, interactions=interactions_base)
+                result_op = self._model_counter.model_count(*problem_op)
+                value_Z_op = result_op.model_count
+    
+                magnetization_sum += (value_Z_op/value_Z)
+    
+            magnetization.append(magnetization_sum / n_spins)
 
         # --- Plot ---
         solver_name = self._model_counter.__class__.__name__
@@ -200,8 +219,30 @@ class BenchMark:
         magnetization_squared = []
     
         for beta in betas:
+    
             print("Computing M^2 for beta = ", beta)
-            magnetization_squared.append(model.compute_expected_M_squared(self._model_counter, beta))
+    
+            index, regs, interactions_base = model.get_base_interaction(beta) # Only compute interaction once per beta value
+                
+            problem_Z = interactions_base.mat.trace_formula()
+            result_Z = self._model_counter.model_count(*problem_Z)
+            value_Z = result_Z.model_count
+    
+            magnetization_sum = 0.0
+            n_spins = len(model)
+
+            magnetization_sum += n_spins # Add up the diagonal where <s_i s_i> = 1
+    
+            for i in range(n_spins):
+                for j in range(i + 1, n_spins):
+                    problem_op = model.apply_ZZ_to_base(target_spins = (i,j), index=index, regs=regs, interactions=interactions_base)
+                    result_op = self._model_counter.model_count(*problem_op)
+                    value_Z_op = result_op.model_count
+
+                    # Double the result as pairs (i,j) and (j,i) are equivalent
+                    magnetization_sum += 2 * (value_Z_op/value_Z)
+    
+            magnetization_squared.append(magnetization_sum / (n_spins**2))
 
         magnetization = np.sqrt(magnetization_squared)
         
@@ -228,6 +269,40 @@ class BenchMark:
     
         return magnetization
 
+    def runtime_vs_p_benchMark(self, shape: tuple, p_values: list, average: int = 5, beta: float = 1.0, save: bool = False):
+
+        runtime_values = []
+
+        print(" = Start Benchmark =")
+        for p in p_values:
+            models = []
+            for i in range(average):
+                models.append(self._Model.generate_lattice(shape, p_ferro=float(p), seed=i)) # We first create various models with the same p so we can average the time it takes to solve them
+
+            measured_runtimes, _, _ = self.run_solver(models, beta)
+            average_runtime = np.average(measured_runtimes)
+            runtime_values.append(average_runtime)
+
+            print(f"p = {p:.2f} -> {average_runtime} s")
+
+        # --- Plot ---
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+        ax.plot(p_values, runtime_values, marker="o", linewidth=1.5, markersize=5)
+
+        ax.set_xlabel("p (probability of J = +1)")
+        ax.set_ylabel("Runtime average (s)")
+
+        ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
+        ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
+
+        fig.tight_layout()
+        if(save):
+            solver_name = self._model_counter.__class__.__name__
+            output_dir = "Plots/Runtime_vs_p"
+            os.makedirs(output_dir, exist_ok=True)
+            fig.savefig(f"{output_dir}/Runtime_vs_p_{shape}_{solver_name}.png", dpi=150)
+        plt.show()
 
     def run_solver(self, models: list[BaseModel], beta: float, true_values: list[float] = None) -> tuple[list[float], list[float]]:
         """ Solve the provided models by taking the WCNF and running it through
@@ -242,10 +317,7 @@ class BenchMark:
         failed = False
         for i, result in enumerate(self._model_counter.batch_model_count(*problems)):
             if not result.success:
-                    failed = True
-                    break
-            if failed:
-                print("FAILURE")
+                print(f"FAILURE (model {i} of {len(models)})")
                 break
 
             runtimes.append(float(result.runtime))
