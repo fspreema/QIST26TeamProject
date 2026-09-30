@@ -17,7 +17,12 @@ def shape_vs_runtime(max_size : tuple[int,int]= (3,3), solver : ModelCounter = T
                 continue
             shapes.append((x,y))
 
-    runtimes = bm.runtime_vs_lattice_benchMark(shapes, average = 8)
+    runtimes = []
+    for shape in shapes:
+        models = [RandomBondIsingModel.generate_lattice(shape, seed=i) for i in range(8)]
+        measured_runtimes, _, _ = bm.run_solver(models, 1.0)
+        runtimes.append(np.average(measured_runtimes))
+        print(f"shape = {shape} -> {runtimes[-1]} s")
     runtimes.insert(0, 0)
 
     z = np.asarray(runtimes).reshape((max_size[1],max_size[0]))
@@ -58,7 +63,7 @@ def magnetization_vs_beta(shape: tuple[int,int], betas: list, p_ferro: float = 1
 
 if __name__ == "__main__":
 
-    # shape_vs_runtime((12,12), Cachet)
+    shape_vs_runtime((12,12), Cachet)
 
     L = 2
     magnetization_vs_beta(shape=(L, L), betas=np.linspace(0.0, 3.0, 10), p_ferro=1.0)

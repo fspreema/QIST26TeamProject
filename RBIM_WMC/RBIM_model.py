@@ -1,3 +1,4 @@
+from __future__ import annotations
 from wcnf_matrix import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,6 +8,9 @@ from itertools import product
 from scipy.linalg import expm
 from typing import Iterable, Literal, Any
 from base_model import BaseModel
+from collections.abc import Callable
+
+Observable = Callable[[int, float, float], float]
 
 SQRT2 = math.sqrt(2)
 X_MATRIX = np.matrix([[0, 1], [1, 0]])
@@ -150,7 +154,6 @@ class RandomBondIsingModel(BaseModel):
         interactions = reduce(lambda x, y: x * y, (self.exp_zz_rotation(beta * strength, index) | (regs[i], regs[j]) for i, j, strength in self.interactions()))
         return (interactions).mat.trace_formula()
 
-
     def get_wcnf_single_spin(self, target_spin: int, beta: float = 1.0) -> tuple[CNF, WeightFunction]:
         """ Convert the given Ising model to a WCNFMatrix, the trace of which is
             equal to the partition function times the operator Z of the Ising model at inverse
@@ -214,106 +217,65 @@ class RandomBondIsingModel(BaseModel):
 
         return (operator * interactions).mat.trace_formula()
 
-    def compute_expected_M(self, model_counter, beta: float):
-        
-        index, regs, interactions_base = self.get_base_interaction(beta) # Only compute interaction once per beta value
-            
-        problem_Z = interactions_base.mat.trace_formula()
-        result_Z = model_counter.model_count(*problem_Z)
-        value_Z = result_Z.model_count
-
-        magnetization_sum = 0.0
-        n_spins = len(self)
-
-        for i in range(n_spins):
-            problem_op = self.apply_Z_to_base(target_spin = i, index=index, regs=regs, interactions=interactions_base)
-            result_op = model_counter.model_count(*problem_op)
-            value_Z_op = result_op.model_count
-
-            magnetization_sum += (value_Z_op/value_Z)
-
-        return (magnetization_sum / n_spins)
-
-    def compute_expected_M_squared(self, model_counter, beta: float):
-            
-        index, regs, interactions_base = self.get_base_interaction(beta) # Only compute interaction once per beta value
-                        
-        problem_Z = interactions_base.mat.trace_formula()
-        result_Z = model_counter.model_count(*problem_Z)
-        value_Z = result_Z.model_count
-
-        magnetization_sum = 0.0
-        n_spins = len(self)
-
-        magnetization_sum += n_spins # Add up the diagonal where <s_i s_i> = 1
-
-        for i in range(n_spins):
-            for j in range(i + 1, n_spins):
-                problem_op = self.apply_ZZ_to_base(target_spins = (i,j), index=index, regs=regs, interactions=interactions_base)
-                result_op = model_counter.model_count(*problem_op)
-                value_Z_op = result_op.model_count
-
-                # Double the result as pairs (i,j) and (j,i) are equivalent
-                magnetization_sum += 2 * (value_Z_op/value_Z)
-
-        return (magnetization_sum / (n_spins**2))
-
-    def compute_expected_q(self, model_counter, beta: float):
+    def compute_expected_q(self, size: int, beta: float, p_ferro: float = 1.0) -> float:
     
-        index, regs, interactions_base = self.get_base_interaction(beta) # Only compute interaction once
+        model = self._Model.generate_lattice((size, size), p_ferro=p_ferro)
+        index, regs, interactions_base = model.get_base_interaction(beta) # Only compute interaction once
 
         problem_Z = interactions_base.mat.trace_formula()
-        result_Z = model_counter.model_count(*problem_Z)
+        result_Z = self._model_counter.model_count(*problem_Z)
         value_Z = result_Z.model_count
 
         spin_squared_sum = 0.0
-        n_spins = len(self)
+        n_spins = len(model)
 
         for i in range(n_spins):
-            problem_op = self.apply_Z_to_base(target_spin = i, index=index, regs=regs, interactions=interactions_base)
-            result_op = model_counter.model_count(*problem_op)
+            problem_op = model.apply_Z_to_base(target_spin = i, index=index, regs=regs, interactions=interactions_base)
+            result_op = self._model_counter.model_count(*problem_op)
             value_Z_op = result_op.model_count
 
             spin_squared_sum += (value_Z_op/value_Z)**2 # sum of <s_i>^2
 
-        return (spin_squared_sum / (n_spins))
+        return (spin_squared_sum / (size**2))
 
-    def compute_expected_q_squared(self, model_counter, beta: float):
+    def compute_expected_q_squared(self, size: int, beta: float, p_ferro: float = 1.0)  -> float:
         """ Total iterations over the solver are combinations of (N 2) """
         
-        index, regs, interactions_base = self.get_base_interaction(beta) # Only compute interaction once
+        model = self._Model.generate_lattice((size, size), p_ferro=p_ferro)
+        index, regs, interactions_base = model.get_base_interaction(beta) # Only compute interaction once
 
         problem_Z = interactions_base.mat.trace_formula()
-        result_Z = model_counter.model_count(*problem_Z)
+        result_Z = self._model_counter.model_count(*problem_Z)
         value_Z = result_Z.model_count
 
         spins_squared_sum = 0.0
-        n_spins = len(self)
+        n_spins = len(model)
 
         spins_squared_sum += n_spins # Add up the diagonal where <s_i s_i> = 1
 
         for i in range(n_spins):
             for j in range(i + 1, n_spins):
-                problem_op = self.apply_ZZ_to_base(target_spins = (i,j), index=index, regs=regs, interactions=interactions_base)
-                result_op = model_counter.model_count(*problem_op)
+                problem_op = model.apply_ZZ_to_base(target_spins = (i,j), index=index, regs=regs, interactions=interactions_base)
+                result_op = self._model_counter.model_count(*problem_op)
                 value_Z_op = result_op.model_count
 
                 # Double the result as pairs (i,j) and (j,i) are equivalent
                 spins_squared_sum += 2 * (value_Z_op/value_Z)**2
 
-        return (spins_squared_sum / (n_spins**2))
+        return (spins_squared_sum / (size**4))
 
-    def compute_expected_q_4(self, model_counter, beta: float):
+    def compute_expected_q_4(self, size: int, beta: float, p_ferro: float = 1.0) -> float:
         """ Total iterations over the solver are combinations of (N 4) """
             
-        index, regs, interactions_base = self.get_base_interaction(beta) # Only compute interaction once
+        model = self._Model.generate_lattice((size, size), p_ferro=p_ferro)
+        index, regs, interactions_base = model.get_base_interaction(beta) # Only compute interaction once
 
         problem_Z = interactions_base.mat.trace_formula()
-        result_Z = model_counter.model_count(*problem_Z)
+        result_Z = self._model_counter.model_count(*problem_Z)
         value_Z = result_Z.model_count
 
         spins_squared_sum = 0.0
-        n_spins = len(self)
+        n_spins = len(model)
 
         spins_squared_sum += n_spins # Sum over i=j=k=l, total N spins
         spins_squared_sum += 3 * n_spins * (n_spins - 1) # Sum over combinations of i=j!=k=l, total 3N(N-1) combiantions
@@ -323,8 +285,8 @@ class RandomBondIsingModel(BaseModel):
 
         for i in range(n_spins):
             for j in range(i + 1, n_spins):
-                problem_op = self.apply_ZZ_to_base(target_spins=(i,j), index=index, regs=regs, interactions=interactions_base)
-                result_op = model_counter.model_count(*problem_op)
+                problem_op = model.apply_ZZ_to_base(target_spins=(i,j), index=index, regs=regs, interactions=interactions_base)
+                result_op = self._model_counter.model_count(*problem_op)
                 value_Z_op = result_op.model_count
 
                 corr_squared = (value_Z_op / value_Z)**2
@@ -335,11 +297,11 @@ class RandomBondIsingModel(BaseModel):
             for j in range(i + 1, n_spins):
                 for k in range(j + 1, n_spins):
                     for l in range(k + 1, n_spins):
-                        problem_op = self.apply_ZZZZ_to_base(target_spins=(i,j,k,l), index=index, regs=regs, interactions=interactions_base)
-                        result_op = model_counter.model_count(*problem_op)
+                        problem_op = model.apply_ZZZZ_to_base(target_spins=(i,j,k,l), index=index, regs=regs, interactions=interactions_base)
+                        result_op = self._model_counter.model_count(*problem_op)
                         value_Z_op = result_op.model_count
 
                         corr_squared = (value_Z_op / value_Z)**2
                         spins_squared_sum += 24 * corr_squared
 
-        return (spins_squared_sum / (n_spins**4))
+        return (spins_squared_sum / (size**8))
