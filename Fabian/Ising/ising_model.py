@@ -144,6 +144,35 @@ def get_lattice_parameters(length: int,
 
     return h_field, j_interactions
 
+def get_random_bond_ising_parameters(length: int, 
+                           periodic: bool, 
+                           dim: int,
+                           p_ferro: float, 
+                           seed: int = 42
+                           ) -> tuple[np.ndarray, np.ndarray]:
+    """
+    - We set h=0
+    - We sample J from a bimodal distrubtation given by:
+        J_ij = p * delta(J_ij - 1) + (1-p) * delta(J_ij + 1)
+    """
+
+    # Init J and rng
+    rng = np.random.default_rng(seed)
+    num_spins = length ** dim
+    j_interactions = np.zeros((num_spins, num_spins))
+
+    # Get pairings for the selectzed lattice
+    pairs = get_pairs(length= length, dim= dim, periodic= periodic)
+
+    # J is sampled from a bimodal distribution
+    for i,j in pairs:
+        if rng.random() < p_ferro:
+            j_interactions[i, j] = 1.0
+        else:
+            j_interactions[i, j] = -1.0
+
+    return j_interactions
+
 def get_random_graph_parameters(length: int, seed: int = 42) -> tuple[np.ndarray, np.ndarray]:
     """
     - We set h=0
@@ -174,6 +203,13 @@ class PartitionModelWMC(ABC):
     @abstractmethod
     def build_partition_formula(self):
         pass
+
+    def _get_identity_tensor(self) -> wmc.WCNFMatrix[float]:
+        """
+        Compute the I tensor for all spins
+        """
+
+        return wmc.WCNFMatrix.identity(IDX, self.num_spins)
 
     def get_partition_function(self, solver_class, *, formula=None):
         """
@@ -219,13 +255,6 @@ class TransversalIsingModel(PartitionModelWMC):
         # Check conditions
         if trotter_steps <= 0 or num_spins <= 0:
             raise ValueError("Trotter steps must be positive and num_spins must be greater than 1")
-
-    def _get_identity_tensor(self) -> wmc.WCNFMatrix[float]:
-        """
-        Compute the I tensor for all spins
-        """
-
-        return wmc.WCNFMatrix.identity(IDX, self.num_spins)
 
     def build_partition_formula(self):
         """
@@ -316,13 +345,6 @@ class IsingModel(PartitionModelWMC):
             raise ValueError(
                 "J and h must have valid dimensions"
             )
-
-    def _get_identity_tensor(self) -> wmc.WCNFMatrix[float]:
-        """
-        Compute the I tensor for all spins
-        """
-
-        return wmc.WCNFMatrix.identity(IDX, self.num_spins)
 
     def build_partition_formula(self):
         """

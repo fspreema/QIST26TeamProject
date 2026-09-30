@@ -1,0 +1,10 @@
+solver,n_spins,trotter_layers,num_vars,num_clauses,success,avg_runtime_s,avg_rel_error,error_message
+DPMC,2,3,29,52,True,0.016333333333333335,0.006906870166492274,
+DPMC,3,3,45,84,True,0.017333333333333336,0.013709361452383328,
+DPMC,4,3,61,116,True,0.016333333333333335,0.0206726754180937,
+DPMC,5,3,77,148,True,0.019666666666666666,0.02775725910786009,
+DPMC,6,3,93,180,True,0.017333333333333333,0.03495303038753805,
+DPMC,7,3,109,212,True,0.019333333333333334,0.04224221889196511,
+DPMC,8,3,125,244,True,0.017,0.04962699739059784,
+Cachet,2,3,29,52,False,,,"exception during model_count: | Traceback (most recent call last): |   File ""/Users/danielgruber/Documents/MSc/Group/Code/QIST26TeamProject/Daniel/benchmark_tfim_solvers.py"", line 71, in run_one |     result = counter.model_count(cnf, weight_func) |   File ""/Users/danielgruber/Documents/MSc/Group/Code/QIST26TeamProject/Daniel/../external/DiracWMC/wcnf_matrix/wcnf_matrix/cnf/model_counter/cachet.py"", line 30, in model_count |     return next(res) | AssertionError | "
+TensorOrder,2,3,29,52,False,,,"exception during model_count: | Traceback (most recent call last): |   File ""/Users/danielgruber/Documents/MSc/Group/Code/QIST26TeamProject/Daniel/benchmark_tfim_solvers.py"", line 71, in run_one |     result = counter.model_count(cnf, weight_func) |   File ""/Users/danielgruber/Documents/MSc/Group/Code/QIST26TeamProject/Daniel/../external/DiracWMC/wcnf_matrix/wcnf_matrix/cnf/model_counter/tensororder.py"", line 31, in model_count |     return next(res) | AssertionError | "

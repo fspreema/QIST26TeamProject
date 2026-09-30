@@ -15,6 +15,7 @@ from ising_model import (
     TransversalIsingModel,
     get_lattice_parameters,
     get_pairs,
+    get_random_bond_ising_parameters,
     get_random_graph_parameters,
 )
 from local_solvers import TensorOrderLocal
@@ -175,6 +176,81 @@ def run_random_graph_experiment():
         filename="ising_random_graph.pdf",
     )
 
+def run_2dim_rndm_bnd_ising():
+    """
+    Average solver runtimes over five graphs with expected degree three.
+
+    Couplings are uniform on [-1, 1], with no external field. Each graph is
+    built once and passed to every solver still active at that size.
+    """
+
+    # Init parameters & runtime
+    lenghts_list = range(2, 8, 2)
+    num_runs = 5
+    runtime = {name: [] for name in available_solvers}
+    print("\n2DIM RANDOM BOND ISING", flush=True)
+
+    # Loop over graph sizes
+    for curr_length in lenghts_list:
+
+        curr_runtimes = {name: [] for name in available_solvers}
+        active_solvers = dict(available_solvers)
+        curr_num_spins = curr_length ** 2
+
+        # Loop over the 5 runs per size
+        for run in range(num_runs):
+
+            # Create for all 5 runs individual sampled interactions (Rndm. Samlping)
+            # -> Therefore needing individual seeds for different sampling
+            j_interactions = get_random_bond_ising_parameters(
+                length=curr_length,
+                periodic=False,
+                dim=2,
+                p_ferro=0.8,
+                seed= run
+            )
+
+            # Load model
+            model = IsingModel(
+                num_spins=curr_num_spins,
+                j_interactions=j_interactions,
+                h_field=np.zeros(curr_num_spins),
+                beta=1.0,
+            )
+
+            # Get results depending on solvers
+            results = run_model_with_solvers(
+                model,
+                case=f"spins={curr_num_spins}, run={run + 1}",
+                selected_solvers=active_solvers,
+            )
+
+            # Safe runtime
+            for name, solver_runtime in results.items():
+
+                if solver_runtime is None:
+                    # A failed solver cannot contribute a five-run mean at
+                    # this size; continue the remaining instances for others.
+                    del active_solvers[name]
+                else:
+                    curr_runtimes[name].append(solver_runtime)
+
+        # If all 5 runs of same n had finsihed, take mean
+        # Else, runtime is NaN and not plotted
+        for name, times in curr_runtimes.items():
+
+            if len(times) == num_runs:
+                runtime[name].append(np.mean(times))
+            else:
+                runtime[name].append(float("nan"))
+
+    plot_runtime(
+        [length ** 2 for length in lenghts_list],
+        runtime,
+        title="Random Bond 2dim Ising model runtime",
+        xlabel="Number of spins",
+        filename="rndm_2dim_ising_bond.pdf",
+    )
 
 def run_lattice_experiment(dimensions, lengths, *, title, xlabel, filename):
     """
@@ -241,7 +317,7 @@ def run_transversal_experiment():
     Compare solvers for open transverse-field chains at fixed Trotter steps.
     """
     lengths = list(range(2, 9))
-    trotter_steps = 10
+    trotter_steps = 15
     runtime = {name: [] for name in available_solvers}
     print("\nTRANSVERSE-FIELD ISING EXPERIMENT", flush=True)
 
@@ -275,7 +351,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Compare Ising solver runtimes.")
     parser.add_argument(
         "--experiment",
-        choices=("1d", "2d", "random", "transversal", "all"),
+        choices=("1d", "2d", "random", "transversal", "all", "2dim_bond"),
         default="all"
     )
     parser.add_argument(
@@ -294,6 +370,9 @@ if __name__ == "__main__":
 
     if args.experiment in ("random", "all"):
         run_random_graph_experiment()
+
+    if args.experiment in ("2dim_bond", "all"):
+        run_2dim_rndm_bnd_ising()
 
     if args.experiment in ("transversal", "all"):
         run_transversal_experiment()
