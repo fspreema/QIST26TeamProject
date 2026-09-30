@@ -167,26 +167,8 @@ class BenchMark:
         magnetization = []
     
         for beta in betas:
-    
             print("Computing M for beta = ", beta)
-
-            index, regs, interactions_base = model.get_base_interaction(beta) # Only compute interaction once per beta value
-    
-            problem_Z = interactions_base.mat.trace_formula()
-            result_Z = self._model_counter.model_count(*problem_Z)
-            value_Z = result_Z.model_count
-    
-            magnetization_sum = 0.0
-            n_spins = len(model)
-    
-            for i in range(n_spins):
-                problem_op = model.apply_Z_to_base(target_spin = i, index=index, regs=regs, interactions=interactions_base)
-                result_op = self._model_counter.model_count(*problem_op)
-                value_Z_op = result_op.model_count
-    
-                magnetization_sum += (value_Z_op/value_Z)
-    
-            magnetization.append(magnetization_sum / n_spins)
+            magnetization.append(model.compute_expected_M(self._model_counter, beta))
 
         # --- Plot ---
         solver_name = self._model_counter.__class__.__name__
@@ -219,30 +201,8 @@ class BenchMark:
         magnetization_squared = []
     
         for beta in betas:
-    
-            print("Computing M^2 for beta = ", beta)
-    
-            index, regs, interactions_base = model.get_base_interaction(beta) # Only compute interaction once per beta value
-                
-            problem_Z = interactions_base.mat.trace_formula()
-            result_Z = self._model_counter.model_count(*problem_Z)
-            value_Z = result_Z.model_count
-    
-            magnetization_sum = 0.0
-            n_spins = len(model)
-
-            magnetization_sum += n_spins # Add up the diagonal where <s_i s_i> = 1
-    
-            for i in range(n_spins):
-                for j in range(i + 1, n_spins):
-                    problem_op = model.apply_ZZ_to_base(target_spins = (i,j), index=index, regs=regs, interactions=interactions_base)
-                    result_op = self._model_counter.model_count(*problem_op)
-                    value_Z_op = result_op.model_count
-
-                    # Double the result as pairs (i,j) and (j,i) are equivalent
-                    magnetization_sum += 2 * (value_Z_op/value_Z)
-    
-            magnetization_squared.append(magnetization_sum / (n_spins**2))
+            print("Computing M^2 for beta = ", beta)    
+            magnetization_squared.append(model.compute_expected_M_squared(self._model_counter, beta))
 
         magnetization = np.sqrt(magnetization_squared)
         

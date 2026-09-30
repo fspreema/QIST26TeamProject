@@ -63,7 +63,7 @@ def magnetization_vs_beta(shape: tuple[int,int], betas: list, p_ferro: float = 1
 
 if __name__ == "__main__":
 
-    shape_vs_runtime((12,12), Cachet)
+    # shape_vs_runtime((12,12), Cachet)
 
     L = 2
     magnetization_vs_beta(shape=(L, L), betas=np.linspace(0.0, 3.0, 10), p_ferro=1.0)
