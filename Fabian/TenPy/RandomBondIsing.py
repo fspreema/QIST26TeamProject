@@ -59,5 +59,5 @@ class RandomBondIsing(CouplingMPOModel):
         # -> This arrays needs to be of the same dimension as the actual lattice
         for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
             curr_j = self.get_coupling_strength(model_params, u1, u2, dx)
-            self.add_coupling(curr_j, u1, 'Sz', u2, 'Sz', dx)
+            self.add_coupling(curr_j, u1, 'Sigmaz', u2, 'Sigmaz', dx)
 
