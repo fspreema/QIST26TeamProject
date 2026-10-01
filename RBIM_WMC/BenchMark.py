@@ -12,7 +12,7 @@ class BenchMark:
         self._Model:BaseModel = Model
         self._model_counter = solver()
 
-    def runtime_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, save: bool = False):
+    def runtime_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, plot: bool = False):
 
         runtime_values = []
 
@@ -30,24 +30,26 @@ class BenchMark:
 
         number_of_spins = [shape[0] * shape[1] for shape in shapes]
 
-        # --- Plot ---
-        fig, ax = plt.subplots(figsize=(8, 5))
+        if plot:
+            # --- Plot ---
+            fig, ax = plt.subplots(figsize=(8, 5))
 
-        ax.plot(number_of_spins, runtime_values, marker="o", linewidth=1.5, markersize=5)
+            ax.plot(number_of_spins, runtime_values, marker="o", linewidth=1.5, markersize=5)
 
-        ax.set_yscale("log")
-        ax.set_xlabel("N (# spins)")
-        ax.set_ylabel("Runtime average (s)")
+            ax.set_yscale("log")
+            ax.set_xlabel("N (# spins)")
+            ax.set_ylabel("Runtime average (s)")
 
-        ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
-        ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
+            ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
+            ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
 
-        fig.tight_layout()
-        if(save):
+            fig.tight_layout()
             fig.savefig(f"RBMI_WMC/Plots/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
-        plt.show()
+            plt.show()
 
-    def error_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, save: bool = False):
+        return runtime_values
+
+    def error_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, plot: bool = False):
 
         runtime_values = []
         error_values = []
@@ -75,22 +77,24 @@ class BenchMark:
 
         number_of_spins = [shape[0] * shape[1] for shape in shapes]
 
-        # --- Plot ---
-        fig, ax = plt.subplots(figsize=(8, 5))
+        if (plot):
+            # --- Plot ---
+            fig, ax = plt.subplots(figsize=(8, 5))
 
-        ax.plot(number_of_spins, error_values, marker="o", linewidth=1.5, markersize=5)
+            ax.plot(number_of_spins, error_values, marker="o", linewidth=1.5, markersize=5)
 
-        ax.set_yscale("log")
-        ax.set_xlabel("N (# spins)")
-        ax.set_ylabel("Relative error compared to exact solution")
+            ax.set_yscale("log")
+            ax.set_xlabel("N (# spins)")
+            ax.set_ylabel("Relative error compared to exact solution")
 
-        ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
-        ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
+            ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
+            ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
 
-        fig.tight_layout()
-        if(save):
+            fig.tight_layout()
             fig.savefig(f"RBMI_WMC/Plots/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
-        plt.show()
+            plt.show()
+
+        return runtime_values, error_values
 
     def Generate_GoundStateEnergy(self, shape: list, average: int = 5):
         """This function calculates the Ground State Energy from a system by performing
