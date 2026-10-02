@@ -1,45 +1,20 @@
-from RBIM_model import RandomBondIsingModel
+from RBIM_model import RandomBondIsingModel, BaseModel
 from BenchMark import BenchMark
 from wcnf_matrix import ModelCounter, DPMC, Cachet, TensorOrder
 import time
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
-SOLVERS: tuple[type[ModelCounter], ...] = (DPMC, Cachet, TensorOrder,)  
+SOLVERS: tuple[type[ModelCounter], ...] = (DPMC, Cachet, TensorOrder,)
 
-def shape_vs_runtime(max_size : tuple[int,int]= (3,3), solver : ModelCounter = TensorOrder):
+def p_vs_runtime(shape: tuple[int,int] = (6,6), solver: ModelCounter = Cachet):
     bm = BenchMark(RandomBondIsingModel, solver)
 
-    shapes = []
-    for y in range(1,max_size[1]+1):
-        for x in range(1,max_size[0]+1):
-            if (x == 1 and y == 1):
-                continue
-            shapes.append((x,y))
+    p_values = np.linspace(0, 1, 21)
+    bm.runtime_vs_p_benchMark(shape, p_values, average = 50, save = True)
 
-    runtimes = []
-    for shape in shapes:
-        models = [RandomBondIsingModel.generate_lattice(shape, seed=i) for i in range(8)]
-        measured_runtimes, _, _ = bm.run_solver(models, 1.0)
-        runtimes.append(np.average(measured_runtimes))
-        print(f"shape = {shape} -> {runtimes[-1]} s")
-    runtimes.insert(0, 0)
-
-    z = np.asarray(runtimes).reshape((max_size[1],max_size[0]))
-
-    fig, ax = plt.subplots()
-
-    image = ax.imshow(z,aspect="equal",cmap="viridis", extent=[0.5,max_size[0]+0.5,0.5,max_size[1]+0.5])
-    ax.set_xlabel("lattice size x")
-    ax.set_ylabel("lattice size y")
-    ax.set_title("runtime by lattice size")
-    ax.set_xticks(np.arange(1,max_size[0]+1))
-    ax.set_yticks(np.arange(1,max_size[1]+1))
-    fig.colorbar(image, ax=ax, label="runtime [s]")
-
-    plt.tight_layout()
-
-    plt.show()
 
 def magnetization_vs_beta(shape: tuple[int,int], betas: list, p_ferro: float = 1.0):
     bm = BenchMark(RandomBondIsingModel, DPMC)

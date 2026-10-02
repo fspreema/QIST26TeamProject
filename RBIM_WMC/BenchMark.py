@@ -12,7 +12,7 @@ class BenchMark:
         self._Model:BaseModel = Model
         self._model_counter = solver()
 
-    def runtime_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, save: bool = False):
+    def runtime_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, plot: bool = False):
 
         runtime_values = []
 
@@ -30,9 +30,9 @@ class BenchMark:
 
         number_of_spins = [shape[0] * shape[1] for shape in shapes]
 
-
-        # --- Plot ---
-        fig, ax = plt.subplots(figsize=(8, 5))
+        if plot:
+            # --- Plot ---
+            fig, ax = plt.subplots(figsize=(8, 5))
 
         ax.plot(number_of_spins, runtime_values, marker="o", linewidth=1.5, markersize=5)
 
@@ -44,13 +44,16 @@ class BenchMark:
         ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
 
         fig.tight_layout()
-        if save:
-            output_dir = "Plots/Runtime_vs_Lattice"
-            os.makedirs(output_dir, exist_ok=True)
-            fig.savefig(f"{output_dir}/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
+
+        output_dir = "Plots/Runtime_vs_Lattice"
+        os.makedirs(output_dir, exist_ok=True)
+        fig.savefig(f"{output_dir}/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
+
         plt.show()
 
-    def error_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, save: bool = False):
+        return runtime_values
+
+    def error_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, plot: bool = False):
 
         runtime_values = []
         error_values = []
@@ -68,7 +71,7 @@ class BenchMark:
                 print(f"partition function for shape {shape} was to large to fit into memory")
                 break
 
-            measured_runtimes, measured_errors = self.run_solver(models, beta, true_values)
+            measured_runtimes, measured_errors, _ = self.run_solver(models, beta, true_values)
             average_runtime = np.average(measured_runtimes)
             average_error = np.average(measured_errors)
             runtime_values.append(average_runtime)
@@ -78,22 +81,24 @@ class BenchMark:
 
         number_of_spins = [shape[0] * shape[1] for shape in shapes]
 
-        # --- Plot ---
-        fig, ax = plt.subplots(figsize=(8, 5))
+        if (plot):
+            # --- Plot ---
+            fig, ax = plt.subplots(figsize=(8, 5))
 
-        ax.plot(number_of_spins, error_values, marker="o", linewidth=1.5, markersize=5)
+            ax.plot(number_of_spins, error_values, marker="o", linewidth=1.5, markersize=5)
 
-        ax.set_yscale("log")
-        ax.set_xlabel("N (# spins)")
-        ax.set_ylabel("Relative error compared to exact solution")
+            ax.set_yscale("log")
+            ax.set_xlabel("N (# spins)")
+            ax.set_ylabel("Relative error compared to exact solution")
 
-        ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
-        ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
+            ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
+            ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
 
-        fig.tight_layout()
-        if save:
+            fig.tight_layout()
             fig.savefig(f"RBMI_WMC/Plots/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
-        plt.show()
+            plt.show()
+
+        return runtime_values, error_values
 
     def Generate_GoundStateEnergy(self, shape: list, average: int = 5):
         """This function calculates the Ground State Energy from a system by performing
@@ -158,6 +163,43 @@ class BenchMark:
         output_dir = "Plots/Energy_vs_Beta"
         os.makedirs(output_dir, exist_ok=True)
         fig.savefig(f"{output_dir}/Energy_vs_Beta_{shape}_{solver_name}.png", dpi=150)
+
+    def runtime_vs_p_benchMark(self, shape: tuple, p_values: list, average: int = 5, beta: float = 1.0, save: bool = False):
+
+        runtime_values = []
+
+        print(" = Start Benchmark =")
+        for p in p_values:
+            models = []
+            for i in range(average):
+                models.append(self._Model.generate_lattice(shape, p_ferro=float(p), seed=i)) # We first create various models with the same p so we can average the time it takes to solve them
+
+            measured_runtimes, _, _ = self.run_solver(models, beta)
+            average_runtime = np.average(measured_runtimes)
+            runtime_values.append(average_runtime)
+
+            print(f"p = {p:.2f} -> {average_runtime} s")
+
+        # --- Plot ---
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+        ax.plot(p_values, runtime_values, marker="o", linewidth=1.5, markersize=5)
+
+        ax.set_xlabel("p (probability of J = +1)")
+        ax.set_ylabel("Runtime average (s)")
+
+        ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
+        ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
+
+        fig.tight_layout()
+        if(save):
+            solver_name = self._model_counter.__class__.__name__
+            output_dir = "Plots/Runtime_vs_p"
+            os.makedirs(output_dir, exist_ok=True)
+            fig.savefig(f"{output_dir}/Runtime_vs_p_{shape}_{solver_name}.png", dpi=150)
+        plt.show()
+
+        return runtime_values
 
     def magnetization_vs_beta_benchMark(self, shape: list, betas: list, p_ferro: float = 1.0):
         print("=== Calculating Magnetization ===")

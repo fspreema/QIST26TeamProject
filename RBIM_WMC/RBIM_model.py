@@ -12,6 +12,7 @@ from collections.abc import Callable
 
 Observable = Callable[[int, float, float], float]
 
+
 SQRT2 = math.sqrt(2)
 X_MATRIX = np.matrix([[0, 1], [1, 0]])
 Z_MATRIX = np.matrix([[1, 0], [0, -1]])
