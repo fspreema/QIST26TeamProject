@@ -34,22 +34,22 @@ class BenchMark:
             # --- Plot ---
             fig, ax = plt.subplots(figsize=(8, 5))
 
-        ax.plot(number_of_spins, runtime_values, marker="o", linewidth=1.5, markersize=5)
+            ax.plot(number_of_spins, runtime_values, marker="o", linewidth=1.5, markersize=5)
 
-        ax.set_yscale("log")
-        ax.set_xlabel("N (# spins)")
-        ax.set_ylabel("Runtime average (s)")
+            ax.set_yscale("log")
+            ax.set_xlabel("N (# spins)")
+            ax.set_ylabel("Runtime average (s)")
 
-        ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
-        ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
+            ax.grid(True, which="major", linestyle="-", linewidth=0.5, alpha=0.7)
+            ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.4)
 
-        fig.tight_layout()
+            fig.tight_layout()
 
-        output_dir = "Plots/Runtime_vs_Lattice"
-        os.makedirs(output_dir, exist_ok=True)
-        fig.savefig(f"{output_dir}/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
+            output_dir = "Plots/Runtime_vs_Lattice"
+            os.makedirs(output_dir, exist_ok=True)
+            fig.savefig(f"{output_dir}/Runtime_vs_Lattice_B_{beta}.png", dpi=150)
 
-        plt.show()
+            plt.show()
 
         return runtime_values
 
