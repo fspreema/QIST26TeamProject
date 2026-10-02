@@ -47,9 +47,14 @@ class BenchmarkRunner:
 
         return (betas, logZ, max_chi)
 
-    def run(self) -> None:
+    def run(self, file_name: str, overwrite: bool = False) -> None:
 
-        with open("benchmark_results.csv", "a", newline="") as file:
+        if overwrite:
+            mode = "w"
+        else:
+            mode = "a"
+
+        with open(file= file_name, mode = mode, newline="") as file:
 
             writer = csv.writer(file)
 
