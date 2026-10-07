@@ -13,7 +13,9 @@ class RandomBondIsing(CouplingMPOModel):
     """
 
     # DO NOT override the __init__ method, as it is already implemented in the CouplingMPOModel class!!!
- 
+
+
+
     # Override Internal Method to initialize the sites
     # -> Although model_params is not used in this method, it is still required to be 
     # passed as an argument due to the method signature in the parent class!!
@@ -21,6 +23,8 @@ class RandomBondIsing(CouplingMPOModel):
         # Since H = - sum_{<i,j>} J_{ij} S^z_i S^z_j, we can use SpinHalfSite with conserve='Sz'
         # -> This is due to the fact that h=0
         return SpinHalfSite(conserve='Sz')
+
+  
 
     def get_coupling_strength(self, model_params:dict, u1, u2, dx) -> float:
         """
@@ -40,9 +44,10 @@ class RandomBondIsing(CouplingMPOModel):
         # Get Shape of the coupling array
         shape, _ = self.lat.coupling_shape(dx)
 
+        nprng = np.random.default_rng(seed = model_params["seeds"][0])
         # Return J for any given pair of sites u1 and u2
         p= model_params.get('p', 0.5)
-        j = np.random.choice([-1, 1], size=shape, p=[p, 1 - p])
+        j = nprng.choice([-1, 1], size=shape, p=[p, 1 - p])
 
         return j
 

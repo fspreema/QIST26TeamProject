@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     groups = defaultdict(list)
 
-    with open("benchmark_results.csv", newline="") as file:
+    with open("benchmark_results_chi_max=100 20261006-203617", newline="") as file:
         reader = csv.DictReader(file)
 
         for row in reader:
@@ -57,6 +57,32 @@ if __name__ == "__main__":
             runtime = float(row["runtime_s"])
 
             groups[label].append((lx, max_chi, runtime))
+
+    with open("benchmark_results_chi_max=100 20261007-104635", newline="") as file:
+            reader = csv.DictReader(file)
+    
+            for row in reader:
+                lx = int(row["Lx"])
+                ly = int(row["Ly"])
+    
+                # Determine boundary condition
+                if row["bc_x"] == "open" and row["bc_y"] == "open":
+                    boundary = "open"
+                elif row["bc_x"] == "periodic" and row["bc_y"] == "periodic":
+                    boundary = "torus"
+                else:
+                    boundary = "cylinder"
+    
+                if boundary == "cylinder":
+                    label = rf"{row['lattice']} - cylinder ($L_x \times {ly}$)"
+                else:
+                    label = rf"{row['lattice']} - {boundary} ($L_x \times L_x$)"
+    
+                max_chi_values = ast.literal_eval(row["max_chi"])
+                max_chi = max(max_chi_values)
+                runtime = float(row["runtime_s"])
+    
+                groups[label].append((lx, max_chi, runtime))
 
     # Bond dimension plot
     fig_chi, ax_chi = plt.subplots(figsize=(6, 5))
@@ -117,7 +143,7 @@ if __name__ == "__main__":
 
     beta_runtimes = []
 
-    with open("benchmark_results_beta.csv", newline="") as file:
+    with open("benchmark_results_chi_max=100 20261006-203617", newline="") as file:
         reader = csv.DictReader(file)
 
         for row in reader:
@@ -126,6 +152,16 @@ if __name__ == "__main__":
             runtime = float(row["runtime_s"])
 
             beta_runtimes.append((max_beta, runtime))
+
+    with open("benchmark_results_chi_max=100 20261007-104635", newline="") as file:
+            reader = csv.DictReader(file)
+    
+            for row in reader:
+                beta_values = ast.literal_eval(row["betas"])
+                max_beta = max(beta_values)
+                runtime = float(row["runtime_s"])
+    
+                beta_runtimes.append((max_beta, runtime))
 
     # Sort by beta
     beta_runtimes.sort()

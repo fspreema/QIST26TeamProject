@@ -26,7 +26,9 @@ class BenchmarkModel:
                  beta_max=3.0,
                  dt=0.05,
                  order=2,
-                 approx="II") -> None:
+                 approx="II", 
+                 chi_max: int = 100,
+                 svd_min: float = 1.0e-8) -> None:
 
         # Check measure Observable
         if measure_obs not in {"Sz", "Energy_per_spin", "Correlations", "Mz_squared", "None"}:
@@ -40,6 +42,8 @@ class BenchmarkModel:
         self.approx = approx
         self.observable = measure_obs
         self.track_z = track_z
+        self.chi_max = chi_max
+        self.svd_min = svd_min
 
         # Perform imag evolution setup and reset already computed states
         self._reset()
@@ -101,7 +105,7 @@ class BenchmarkModel:
 
         options = {
             "trunc_params": {
-                "chi_max": 400,
+                "chi_max": 100,
                 "svd_min": 1.0e-8,
             }
         }

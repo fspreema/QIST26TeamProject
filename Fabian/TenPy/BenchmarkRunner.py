@@ -30,7 +30,7 @@ class BenchmarkRunner:
         curr_model = RandomBondIsing(curr_model_config)
 
         # Run Benchmark on current p
-        print(f"Performing Benchmark for {curr_model_config.get("lattice")}")
+        print(f"Performing Benchmark for {curr_model_config.get("lattice")}, x-Length {curr_model_config.get("Lx")}, y-length {curr_model_config.get("Ly")}")
         benchmark = BenchmarkModel(
             model=curr_model,
             measure_obs="None",
