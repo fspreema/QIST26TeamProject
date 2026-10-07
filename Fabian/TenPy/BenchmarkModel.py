@@ -105,12 +105,12 @@ class BenchmarkModel:
 
         options = {
             "trunc_params": {
-                "chi_max": 100,
-                "svd_min": 1.0e-8,
+                "chi_max": self.chi_max,
+                "svd_min": self.svd_min,
             }
         }
 
-        # Depending on Order we initilize different time evolution operators in general the scheme is
+        # Depending on Order we initialize different time evolution operators in general the scheme is
         # It is worth noting that .make_U approximates this state we therefore have
         # U \approx e^{-\Delta \tau H}
         if self.order == 1:
@@ -124,7 +124,9 @@ class BenchmarkModel:
             raise ValueError("order must be 1 or 2")
 
         # Simply initilize engine and measure the first batch for infinte temperature
+        print(options["trunc_params"])
         self.eng = PurificationApplyMPO(self.psi, self.Us[0], options)
+        
         if self.observable != "None":
             self.values = [self._measure()]
 

@@ -15,14 +15,18 @@ class BenchmarkRunner:
         beta_max=0.4,
         dt=0.05,
         repeats=1,
+        chi_max: int = 100,
+        svd_min: float = 1.0e-8
     ) -> None:
 
         # Init Parameters
-        self.seeds = seeds # Seed currently unused
+        self.seeds = seeds 
         self.model_configs = model_configs
         self.beta_max = beta_max
         self.dt = dt
         self.repeats = repeats
+        self.chi_max = chi_max
+        self.svd_min = svd_min
 
     def _get_purification_observable(self, curr_model_config: dict) -> tuple:
 
@@ -37,6 +41,8 @@ class BenchmarkRunner:
             track_z= True,
             beta_max= self.beta_max,
             dt = self.dt,
+            chi_max= self.chi_max,
+            svd_min = self.svd_min
         )
         data = benchmark.run()
 
