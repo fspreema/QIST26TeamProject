@@ -6,7 +6,7 @@ from tenpy.models.model import CouplingMPOModel
 from tenpy.networks.purification_mps import PurificationMPS
 
 
-class BenchmarkModel:
+class PurificationSimulation:
 
     """
     ### Purification Procedure ###

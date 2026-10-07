@@ -3,11 +3,12 @@ import statistics
 import timeit
 
 import numpy as np
-from BenchmarkModel import BenchmarkModel
 from RandomBondIsing import RandomBondIsing
 
+from Fabian.TenPy.PurificationSimulation import PurificationSimulation
 
-class BenchmarkRunner:
+
+class RuntimeBenchmarkRunner:
 
     def __init__(
         self,
@@ -37,7 +38,7 @@ class BenchmarkRunner:
 
         # Run Benchmark on current p
         print(f"Performing Benchmark for {curr_model_config.get("lattice")}")
-        benchmark = BenchmarkModel(
+        benchmark = PurificationSimulation(
             model=curr_model,
             measure_obs="None",
             chi_limit=self.chi_limit,
