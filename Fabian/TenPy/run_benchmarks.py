@@ -58,11 +58,12 @@ def accuracy_benchmarks(repeats):
         
         # Init Benchmarking
         AccuracyBenchmarkRunner(model_configs= sampled_model_params,
-                        chi_range= [100, 200, 400, 600],
-                        repeats= repeats,
-                        ).run(file_name=str(RESULTS_DIR / "accuracy_benchmarks.csv"))
-
-    for curr_l in range(3,6):
+                                dt = 0.00625,
+                                chi_range= [4, 16, 64, 200],
+                                repeats= repeats,
+                            ).run(file_name=str(RESULTS_DIR / "accuracy_benchmarks_dt00625.csv"))
+    
+    for curr_l in range(5,7):
 
         # Init Model params
         model_params_square_o = make_model_config(curr_l, curr_l, "Square", "open", "open")
@@ -73,9 +74,10 @@ def accuracy_benchmarks(repeats):
 
         # Init Benchmarking
         AccuracyBenchmarkRunner(model_configs= sampled_model_params,
-                        chi_range= [100, 200, 400, 600],
-                        repeats= repeats,
-                        ).run(file_name=str(RESULTS_DIR / "accuracy_benchmarks.csv"))
+                                dt = 0.00625,
+                                chi_range= [4, 16, 64, 200],
+                                repeats= repeats,
+                            ).run(file_name=str(RESULTS_DIR / "accuracy_benchmarks_dt00625.csv"))
 
 
 def runtime_beta_dependence(repeats):
