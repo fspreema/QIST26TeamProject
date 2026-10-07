@@ -3,9 +3,8 @@ import statistics
 import timeit
 
 import numpy as np
+from PurificationSimulation import PurificationSimulation
 from RandomBondIsing import RandomBondIsing
-
-from Fabian.TenPy.PurificationSimulation import PurificationSimulation
 
 
 class RuntimeBenchmarkRunner:

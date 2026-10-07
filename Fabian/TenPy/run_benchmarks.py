@@ -3,9 +3,8 @@ import argparse
 from pathlib import Path
 
 import numpy as np
-
-from Fabian.TenPy.AccuracyBenchmarkRunner import AccuracyBenchmarkRunner
-from Fabian.TenPy.RuntimeBenchmarkRunner import RuntimeBenchmarkRunner
+from AccuracyBenchmarkRunner import AccuracyBenchmarkRunner
+from RuntimeBenchmarkRunner import RuntimeBenchmarkRunner
 
 RESULTS_DIR = Path(__file__).resolve().parent / "Results"
 

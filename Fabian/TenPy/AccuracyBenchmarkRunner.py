@@ -1,11 +1,10 @@
 import csv
 
-from Fabian.TenPy.PurificationSimulation import BenchmarkModel
-from RandomBondIsing import RandomBondIsing
-from tenpy.models.model import CouplingMPOModel
-from scipy.special import logsumexp
-
 import numpy as np
+from PurificationSimulation import PurificationSimulation
+from RandomBondIsing import RandomBondIsing
+from scipy.special import logsumexp
+from tenpy.models.model import CouplingMPOModel
 
 
 class AccuracyBenchmarkRunner:
@@ -45,7 +44,7 @@ class AccuracyBenchmarkRunner:
 
         # Run Benchmark on current p
         print(f"Performing Benchmark for {curr_model_config.get("lattice")}")
-        benchmark = BenchmarkModel(
+        benchmark = PurificationSimulation(
             model=current_model,
             measure_obs="None",
             chi_limit= curr_chi_limit,
