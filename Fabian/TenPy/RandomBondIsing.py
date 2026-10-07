@@ -7,7 +7,7 @@ class RandomBondIsing(CouplingMPOModel):
 
     """
     Implements the random bond ising model on a 2D square lattice with nearest neighbor interactions. 
-    -> The Hamiltonian is given by: H = - sum_{<i,j>} J_{ij} S^z_i S^z_j
+    -> The Hamiltonian is given by: H = - sum_{<i,j>} J_{ij} Z_i Z_j
     -> The coupling strengths J_{ij} are drawn from J_{ij} = p * delta(j - 1) + (1 - p) * delta(j + 1)
        where p is the probability of having a ferromagnetic bond
     """
@@ -22,7 +22,7 @@ class RandomBondIsing(CouplingMPOModel):
         # -> This is due to the fact that h=0
         return SpinHalfSite(conserve='Sz')
 
-    def get_coupling_strength(self, model_params:dict, u1, u2, dx) -> float:
+    def get_coupling_strength(self, model_params:dict, u1, u2, dx, rng) -> float:
         """
         Returns an array of coupling strengths J
         -> Since neighbour loop is over all verticial and then horizontal family members,
@@ -42,7 +42,7 @@ class RandomBondIsing(CouplingMPOModel):
 
         # Return J for any given pair of sites u1 and u2
         p= model_params.get('p', 0.5)
-        j = np.random.choice([-1, 1], size=shape, p=[p, 1 - p])
+        j = rng.choice([-1, 1], size=shape, p=[p, 1 - p])
 
         return j
 
@@ -52,12 +52,15 @@ class RandomBondIsing(CouplingMPOModel):
         Initialize the terms of the Hamiltonian
         """
 
+        # Initialize Random Number Generator
+        rng = model_params.get('rng', np.random.default_rng())
+
         # We need to be careful here!!
         # This loops over the nearest neighbour directions (i.e. vertical & horiztonal)
         # -> This means each loop has to have an array such that each vertical or horizntal family member
         #    gets individual coupling strengths
         # -> This arrays needs to be of the same dimension as the actual lattice
         for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
-            curr_j = self.get_coupling_strength(model_params, u1, u2, dx)
+            curr_j = self.get_coupling_strength(model_params, u1, u2, dx, rng)
             self.add_coupling(curr_j, u1, 'Sigmaz', u2, 'Sigmaz', dx)
 

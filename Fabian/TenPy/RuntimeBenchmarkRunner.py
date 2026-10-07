@@ -2,23 +2,29 @@ import csv
 import statistics
 import timeit
 
-from BenchmarkModel import BenchmarkModel
+import numpy as np
+from PurificationSimulation import PurificationSimulation
 from RandomBondIsing import RandomBondIsing
 
 
-class BenchmarkRunner:
+class RuntimeBenchmarkRunner:
 
     def __init__(
         self,
         model_configs: list[dict],
-        seeds: list[int] = 10,
-        beta_max=0.4,
+        chi_limit: int = 100,
+        seeds: list[int] | None = None,
+        beta_max=0.5,
         dt=0.05,
-        repeats=1,
+        repeats=5,
     ) -> None:
 
         # Init Parameters
-        self.seeds = seeds # Seed currently unused
+        if seeds is None:
+            seeds = [i for i in range(repeats)]
+        self.seeds = seeds
+        self.chi_limit = chi_limit
+        self.seeds = seeds
         self.model_configs = model_configs
         self.beta_max = beta_max
         self.dt = dt
@@ -31,9 +37,10 @@ class BenchmarkRunner:
 
         # Run Benchmark on current p
         print(f"Performing Benchmark for {curr_model_config.get("lattice")}")
-        benchmark = BenchmarkModel(
+        benchmark = PurificationSimulation(
             model=curr_model,
             measure_obs="None",
+            chi_limit=self.chi_limit,
             track_z= True,
             beta_max= self.beta_max,
             dt = self.dt,
@@ -47,9 +54,14 @@ class BenchmarkRunner:
 
         return (betas, logZ, max_chi)
 
-    def run(self) -> None:
+    def run(self, file_name: str, overwrite: bool = False) -> None:
 
-        with open("benchmark_results.csv", "a", newline="") as file:
+        if overwrite:
+            mode = "w"
+        else:
+            mode = "a"
+
+        with open(file= file_name, mode = mode, newline="") as file:
 
             writer = csv.writer(file)
 
@@ -58,14 +70,17 @@ class BenchmarkRunner:
                 writer.writerow([
                     "lattice", "Lx", "Ly", "p",
                     "bc_x", "bc_y", "bc_MPS",
-                    "runtime_s", "betas", "max_chi", "log_z"
+                    "runtime_s", "betas", "max_chi", "log_z", "num_run"
                 ])
 
             for curr_params in self.model_configs:
 
                 times = []
 
-                for _ in range(self.repeats):
+                for curr_repeat in range(self.repeats):
+
+                    # Write seed into the model params for reproducibility
+                    curr_params["rng"] = np.random.default_rng(self.seeds[curr_repeat])
 
                     start = timeit.default_timer()
 
@@ -85,7 +100,8 @@ class BenchmarkRunner:
                         runtime,
                         betas,
                         max_chi,
-                        log_z
+                        log_z,
+                        curr_repeat
                     ])
 
                     # FLush directly to make output visible directly for debugging

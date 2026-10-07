@@ -6,9 +6,11 @@ from tenpy.models.model import CouplingMPOModel
 from tenpy.networks.purification_mps import PurificationMPS
 
 
-class BenchmarkModel:
+class PurificationSimulation:
 
     """
+    ### Purification Procedure ###
+
     We perform the following procedure:
 
     1) Start with compl. disordered physical state (Here each spin uncorrelated  and either in up or down)
@@ -22,6 +24,7 @@ class BenchmarkModel:
 
     def __init__(self, model: CouplingMPOModel,
                  measure_obs: str,
+                 chi_limit:int = 100,
                  track_z: bool = False,
                  beta_max=3.0,
                  dt=0.05,
@@ -34,6 +37,7 @@ class BenchmarkModel:
 
         # Define Model Params/ Init Model & Set current Beta
         self.model = model
+        self.chi_limit = chi_limit
         self.beta_max = beta_max
         self.dt = dt
         self.order = order
@@ -101,7 +105,7 @@ class BenchmarkModel:
 
         options = {
             "trunc_params": {
-                "chi_max": 400,
+                "chi_max": self.chi_limit,
                 "svd_min": 1.0e-8,
             }
         }
@@ -130,7 +134,7 @@ class BenchmarkModel:
         Perform evolution run
         """
 
-        while self.beta <= self.beta_max + 1e-7:
+        while self.beta < self.beta_max - 1e-7:
 
             # Develop state with imaginary evolution
             # |\Psi_{new}\rangle \propto (e^{-\Delta\tau H_P}\otimes I_A) |\Psi_{old}\rangle
