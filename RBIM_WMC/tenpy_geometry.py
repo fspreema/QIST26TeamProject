@@ -9,37 +9,6 @@ import matplotlib.pyplot as plt
 import os
 
 
-def size_vs_runtime(model_params: dict, max_size: int = 4,
-                    solver : ModelCounter = TensorOrder,
-                    savepath: str = ".", model: BaseModel = RandomBondIsingModel):
-    
-    bm = BenchMark(model, solver)
-    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), savepath)
-
-    sizes = [i for i in range(2,max_size)]
-    shapes = []
-    for s in sizes:
-        shapes.append((s,s))
-
-    runtimes, stds = bm.tenpy_runtime_vs_shape_benchMark(TenpyRBI, model_params, shapes, average = 16)
-
-    # save data to .csv file
-    df = pd.DataFrame({'Shapes':shapes, "Runtimes": runtimes}) #pd.DataFrame([shapes, runtimes], columns=["Shapes", "Runtimes"])
-    #df.to_csv(os.path.join(filepath, rf"shape_vs_runtime_({shapes[-1][0]} {shapes[-1][1]})_{solver.__name__}_{model.__name__}.csv"))
-
-
-    fig, ax = plt.subplots()
-    ax.plot(sizes, runtimes)
-    ax.set_xlabel("Length %L_x%")
-    ax.set_ylabel("Runtime [s]")
-    ax.set_title("Runtime for X")
-    ax.set_yscale('log')
-
-    plt.tight_layout()
-    #plt.savefig(os.path.join(filepath, rf"shape_vs_runtime_({shapes[-1][0]} {shapes[-1][1]})_{solver.__name__}_{model.__name__}.pdf"))
-    plt.show()
-
-
 if __name__ == "__main__":
     # === Parameters here ===   
     save_path = r"Results\Tenpy_model"
