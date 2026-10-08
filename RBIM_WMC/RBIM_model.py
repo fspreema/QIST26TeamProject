@@ -9,6 +9,7 @@ from scipy.linalg import expm
 from scipy.special import logsumexp
 from typing import Iterable, Literal, Any
 from base_model import BaseModel
+from tenpy.models.model import CouplingMPOModel
 from collections.abc import Callable
 
 Observable = Callable[[int, float, float], float]
@@ -76,6 +77,21 @@ class RandomBondIsingModel(BaseModel):
         weight_func[x, 1] = -1.0
         x, y = LogVarRep(2, [x]), LogVarRep(2, [y])
         return WCNFMatrix(index, cnf, weight_func, [x], [y])
+
+    @classmethod
+    def from_Tenpy_model(cls: RandomBondIsingModel, tenpy_model: CouplingMPOModel):
+        num_spins = tenpy_model.lat.N_sites
+        model = cls(num_spins)
+
+        # RandomBondIsing only has z terms
+        couplings = tenpy_model.coupling_terms['Sigmaz_i Sigmaz_j']
+        for c in couplings.to_TermList():
+            type_a, index_a = c[0][0]
+            type_b, index_b = c[0][1]
+            strength = c[1]
+            model[index_a, index_b] = strength   
+
+        return model 
 
     @classmethod
     def generate_lattice(cls: RandomBondIsingModel, shape: tuple[int, int], p_ferro= 0.5, seed: int= 42) -> RandomBondIsingModel:
