@@ -74,20 +74,21 @@ def plot_results():
         max_chi = max(max_chi_values)
         runtime = float(row["runtime_s"])
 
-        groups[label][lx].append((max_chi, runtime))
+        n_spins = lx * ly
+        groups[label][n_spins].append((max_chi, runtime))
 
     # Bond dimension plot
     fig_chi, ax_chi = plt.subplots(figsize=(6, 5))
 
     for label, data in groups.items():
-        lengths = sorted(data)
+        spin_counts = sorted(data)
         max_chis = [
-            mean(chi for chi, runtime in data[lx])
-            for lx in lengths
+            mean(chi for chi, runtime in data[n])
+            for n in spin_counts
         ]
 
         ax_chi.plot(
-            lengths, max_chis, label=label, **curve_style(label)
+            spin_counts, max_chis, label=label, **curve_style(label)
         )
 
     # Set maximum chi line
@@ -103,7 +104,7 @@ def plot_results():
 
     # Plot disc and prop
     set_title(ax_chi, "Maximum Bond Dimension", beta="0.5", dt=0.05)
-    ax_chi.set_xlabel(r"Length $L_x$")
+    ax_chi.set_xlabel(r"Total number of spins $N=L_x L_y$")
     ax_chi.set_ylabel(r"Mean maximum retained bond dimension $\chi$")
     ax_chi.grid(alpha=0.3)
     ax_chi.legend(fontsize=8)
@@ -115,18 +116,18 @@ def plot_results():
     fig_time, ax_time = plt.subplots(figsize=(6, 5))
 
     for label, data in groups.items():
-        lengths = sorted(data)
+        spin_counts = sorted(data)
         runtimes = [
-            mean(runtime for chi, runtime in data[lx])
-            for lx in lengths
+            mean(runtime for chi, runtime in data[n])
+            for n in spin_counts
         ]
 
         ax_time.plot(
-            lengths, runtimes, label=label, **curve_style(label)
+            spin_counts, runtimes, label=label, **curve_style(label)
         )
 
     set_title(ax_time, r"Runtime for $\log Z$", beta="0.5", dt=0.05)
-    ax_time.set_xlabel(r"Length $L_x$")
+    ax_time.set_xlabel(r"Total number of spins $N=L_x L_y$")
     ax_time.set_ylabel("Mean runtime [s]")
     ax_time.set_yscale("log")
     ax_time.grid(which="major", alpha=0.3)
