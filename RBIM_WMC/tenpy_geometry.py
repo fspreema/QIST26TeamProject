@@ -43,17 +43,18 @@ def size_vs_runtime(model_params: dict, max_size: int = 4,
 if __name__ == "__main__":
     # === Parameters here ===   
     save_path = r"Results\Tenpy_model"
-    solver = TensorOrder
+    solver = Cachet
     max_length = 16
     p = 0.5
-    average = 16
+    average = 4
 
     # Prepare variables
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), save_path)
     bm = BenchMark(RandomBondIsingModel, solver)
-    sizes = [int(i) for i in range( 2, max_length +1 )]
+    sizes = [int(i) for i in range( 3, max_length +1 )]
 
     datetime_string = str(datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
+    filename = rf"{solver.__name__}_MaxLength-{max_length}_Average-{average}_{datetime_string}"
 
     # Triangle Torus
     model_params = {
@@ -102,7 +103,7 @@ if __name__ == "__main__":
                        "SO_runtimes": SO_runtimes, "SO_stds": SO_stds,
                        "ST_runtimes": ST_runtimes, "ST_stds": ST_stds,
                        "TT_runtimes": TT_runtimes, "TT_stds": TT_stds })
-    df.to_csv(os.path.join(filepath, rf"MaxLength-{max_length}_Average-{average}_{datetime_string}.csv"))
+    df.to_csv(os.path.join(filepath, filename + ".csv"))
 
     # plot results
     fig, ax = plt.subplots()
@@ -112,12 +113,12 @@ if __name__ == "__main__":
     ax.plot(sizes, TT_runtimes, color = "tab:red", marker = "^", linestyle = "--", markersize = 5, zorder = 4, label = r"Triangular - torus ($L_x \times L_x$)")
     ax.set_xlabel("Length $L_x$")
     ax.set_ylabel("Runtime [s]")
-    ax.set_title("Runtime for X")
+    ax.set_title("Runtime for Z")
     ax.set_yscale('log')
     ax.grid(alpha=0.3)
     ax.legend(fontsize=8)
     plt.tight_layout()
-    plt.savefig(os.path.join(filepath, rf"MaxLength-{max_length}_Average-{average}_{datetime_string}.pdf"))
+    plt.savefig(os.path.join(filepath, filename + ".pdf"))
     plt.show()
 
 
