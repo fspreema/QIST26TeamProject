@@ -6,6 +6,7 @@ import math
 from functools import reduce
 from itertools import product
 from scipy.linalg import expm
+from scipy.special import logsumexp
 from typing import Iterable, Literal, Any
 from base_model import BaseModel
 from collections.abc import Callable
@@ -144,6 +145,22 @@ class RandomBondIsingModel(BaseModel):
             method is very slow for large models """
         # Partition function is Tr(e^(-beta*H))
         return expm(-beta * self.hamiltonian()).trace()
+
+    def ln_partition_function(self, beta: float) -> float:
+        """ Returns the exact log partition function of the model, using
+            matrix exponentiation, given the inverse temperature beta. This
+            method is very slow for large models """
+
+        n_spins = self._spin_count
+        # Generate array with all possible spin configurations (2^N, N)
+        bits = (np.arange(2 ** n_spins)[:, None] & (1 << np.arange(n_spins))) > 0 
+        spins = 2 * bits - 1
+
+        energies = np.zeros(2 ** n_spins)
+        for (i, j), strength in self._interaction.items():
+            energies += -strength * (spins[:, i] * spins[:, j])
+
+        return logsumexp(-beta * energies)
 
     def get_wcnf(self, beta: float = 1.0) -> tuple[CNF, WeightFunction]:
         """ Convert the given Ising model to a WCNFMatrix, the trace of which is
