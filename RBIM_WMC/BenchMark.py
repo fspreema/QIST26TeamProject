@@ -1,5 +1,6 @@
 from base_model import BaseModel
 from wcnf_matrix import ModelCounter
+from tenpy.models.model import CouplingMPOModel
 import time
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,6 +12,40 @@ class BenchMark:
     def __init__(self, Model: BaseModel, solver: ModelCounter):
         self._Model:BaseModel = Model
         self._model_counter = solver()
+
+    def tenpy_runtime_vs_shape_benchMark(self, tenpy_model_class: CouplingMPOModel, model_params: dict, shapes: list, average: int = 5, beta: float = 1.0, skip_on_fail: bool = False):
+        runtime_values = []
+        runtime_stds = []
+
+        print(" = Start Benchmark =")
+        for shape in shapes:
+            models = []
+            for _ in range(average):
+                model_params["Lx"] = shape[0]
+                model_params["Ly"] = shape[1]
+
+                tenpy_model = tenpy_model_class(model_params)
+                wmc_model = self._Model.from_Tenpy_model(tenpy_model)
+                models.append(wmc_model) # We first create various models with the same size so we can average the time it takes to solve them
+
+            measured_runtimes, _, _ = self.run_solver(models, beta)
+
+            # skip when no measurements come back, and pad results with nan
+            if (len(measured_runtimes) == 0 or np.isnan(measured_runtimes).any()) and skip_on_fail:
+                print("Aborting further runs")
+                runtime_values.extend([np.nan] * (len(shapes) - len(runtime_values)))
+                runtime_stds.extend([np.nan] * (len(shapes) - len(runtime_stds)))
+                break
+
+            runtime_average = np.average(measured_runtimes)
+            runtime_deviation = np.std(measured_runtimes)
+
+            runtime_values.append(runtime_average)
+            runtime_stds.append(runtime_deviation)
+
+            print(f"size = {shape} -> {runtime_average:.1e} +- {runtime_deviation:.1e} s")
+
+        return runtime_values, runtime_stds
 
     def runtime_vs_lattice_benchMark(self, shapes: list, average: int = 5, beta: float = 1.0, plot: bool = False):
 
