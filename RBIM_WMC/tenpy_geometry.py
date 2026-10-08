@@ -43,10 +43,10 @@ def size_vs_runtime(model_params: dict, max_size: int = 4,
 if __name__ == "__main__":
     # === Parameters here ===   
     save_path = r"Results\Tenpy_model"
-    solver = Cachet
+    solver = DPMC
     max_length = 16
     p = 0.5
-    average = 4
+    average = 16
 
     # Prepare variables
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), save_path)
