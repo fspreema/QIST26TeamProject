@@ -16,7 +16,7 @@ if __name__ == "__main__":
     max_length = 16
     p = 0.5
     beta = 0.5
-    average = 16
+    average = 1
 
     # Prepare variables
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), save_path)
