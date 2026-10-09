@@ -12,9 +12,10 @@ import os
 if __name__ == "__main__":
     # === Parameters here ===   
     save_path = r"Results\Tenpy_model"
-    solver = DPMC
+    solver = Cachet
     max_length = 16
     p = 0.5
+    beta = 0.5
     average = 16
 
     # Prepare variables
@@ -33,17 +34,17 @@ if __name__ == "__main__":
         "bc_y": "periodic",
     }
     shapes = [ (s,s) for s in sizes ]
-    TT_runtimes, TT_stds = bm.tenpy_runtime_vs_shape_benchMark(TenpyRBI, model_params, shapes, average, skip_on_fail = True)
+    TT_runtimes, TT_stds = bm.tenpy_runtime_vs_shape_benchMark(TenpyRBI, model_params, shapes, average, skip_on_fail = True, beta = beta)
 
     # Square Cilinder
     model_params = {
         "lattice": "Square",
-        "p": 0.5,
+        "p": p,
         "bc_x": "periodic",
         "bc_y": "open",
     }
-    shapes = [ (s,3) for s in sizes ]
-    SC_runtimes, SC_stds = bm.tenpy_runtime_vs_shape_benchMark(TenpyRBI, model_params, shapes, average, skip_on_fail = True)
+    shapes = [ ((s*s)//3, 3) for s in sizes ]
+    SC_runtimes, SC_stds = bm.tenpy_runtime_vs_shape_benchMark(TenpyRBI, model_params, shapes, average, skip_on_fail = True, beta = beta)
 
     # Square Open
     model_params = {
@@ -53,7 +54,7 @@ if __name__ == "__main__":
         "bc_y": "open",
     }
     shapes = [ (s,s) for s in sizes ]
-    SO_runtimes, SO_stds = bm.tenpy_runtime_vs_shape_benchMark(TenpyRBI, model_params, shapes, average, skip_on_fail = True)
+    SO_runtimes, SO_stds = bm.tenpy_runtime_vs_shape_benchMark(TenpyRBI, model_params, shapes, average, skip_on_fail = True, beta = beta)
 
     # Square Torus
     model_params = {
@@ -63,7 +64,7 @@ if __name__ == "__main__":
         "bc_y": "periodic",
     }
     shapes = [ (s,s) for s in sizes ]
-    ST_runtimes, ST_stds = bm.tenpy_runtime_vs_shape_benchMark(TenpyRBI, model_params, shapes, average, skip_on_fail = True)
+    ST_runtimes, ST_stds = bm.tenpy_runtime_vs_shape_benchMark(TenpyRBI, model_params, shapes, average, skip_on_fail = True, beta = beta)
     
 
     # save data to csv file
