@@ -1,7 +1,6 @@
 """
 PLotting function to get the joint plot of WMC and TenPy package for comparison of the results.
 """
-import ast
 import csv
 from collections import defaultdict
 from pathlib import Path
